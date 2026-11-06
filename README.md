@@ -361,5 +361,3 @@ git merge main
 - **Avant chaque Pull Request** : `npm run build` doit passer sans erreur.
 - **Ne jamais réécrire l'historique de `main`** (pas de `git push --force` sur `main`) : passez toujours par une Pull Request.
 - Ne jamais committer `node_modules/`, `.next/` ni `.env.local` (déjà ignorés par `.gitignore`).
-Mohamed Dahorri
-Mohamed Dahorri
