@@ -28,6 +28,7 @@ create trigger on_auth_user_created
 
 alter table public.profiles enable row level security;
 
+revoke all on public.profiles from anon, authenticated;
 grant select, update on public.profiles to authenticated;
 
 create policy "lire son propre profil"
@@ -56,6 +57,7 @@ create table public.log_imports (
 
 create index log_imports_user_id_idx on public.log_imports (user_id);
 alter table public.log_imports enable row level security;
+revoke all on public.log_imports from anon, authenticated;
 grant select, insert, update, delete on public.log_imports to authenticated;
 
 create policy "lire ses imports"
@@ -91,6 +93,7 @@ create index log_events_user_time_idx on public.log_events (import_id, username,
 create index log_events_import_ip_time_idx  on public.log_events (import_id, source_ip, occurred_at);
 
 alter table public.log_events enable row level security;
+revoke all on public.log_events from anon, authenticated;
 grant select, insert, delete on public.log_events to authenticated;
 create policy "lire ses evenements"
     on public.log_events for select
@@ -135,6 +138,7 @@ create index alerts_user_severity_idx on public.alerts (user_id, severity);
 create index alerts_import_id_idx on public.alerts (import_id);
 
 alter table public.alerts enable row level security;
+revoke all on public.alerts from anon, authenticated;
 grant select, insert, update, delete on public.alerts to authenticated;
 
 create policy "lire ses alertes"
