@@ -55,3 +55,24 @@ create table public.log_imports (
 );
 
 create index log_imports_user_id_idx on public.log_imports (user_id);
+alter table public.log_imports enable row level security;
+grant select, insert, update on public.log_imports to authenticated;
+
+create policy "lire ses imports"
+    on public.log_imports for select
+    to authenticated
+    using((select auth.uid() = user_id));
+
+create policy "creer ses imports"
+    on public.log_imports for insert
+    to authenticated
+    with check((select auth.uid() = user_id));
+
+create policy "modifier ses imports"
+    on public.log_imports for update to authenticated
+    using((select auth.uid() = user_id))
+    with check((select auth.uid() = user_id));
+
+create policy "supprimer ses imports"
+    on public.log_imports for delete to authenticated
+    using((select auth.uid() = user_id));
