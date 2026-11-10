@@ -109,3 +109,26 @@ create policy "supprimer ses events"
     on public.log_events for delete
     to authenticated
     using((select auth.uid() = user_id));
+
+create table public.alerts (
+    id uuid primary key default gen_random_uuid(),
+    import_id uuid references public.log_imports (id) on delete cascade,
+    user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+    rule text not null check (rule in ('brute_force', 'password_spraying','impossible_travel','off_hours','new_ip','manual')),
+    severity text not null check (severity in ('low', 'medium', 'high', 'critical')),
+    status text not null default 'open' check (status in ('open', 'investigating', 'resolved', 'false_positive')),
+    title text not null,
+    explanation text not null,
+    username text[] not null default '{}',
+    source_ips text[] not null default '{}',
+    first_seen timestamptz,
+    last_seen timestamptz,
+    event_count integer not null default 0,
+    ip_info jsonb,
+    created_at timestamp not null default now(),
+    updated_at timestamp not null default now()
+);
+
+create index alerts_user_status_idx on public.alerts (user_id, status);
+create index alerts_user_severity_idx on public.alerts (user_id, severity);
+create index alerts_import_id_idx on public.alerts (import_id);
