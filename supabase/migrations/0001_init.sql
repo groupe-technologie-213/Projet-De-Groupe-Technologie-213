@@ -89,3 +89,23 @@ create table public.log_events (
 
 create index log_events_user_time_idx on public.log_events (import_id, username, occurred_at);
 create index log_events_import_ip_time_idx  on public.log_events (import_id, source_ip, occurred_at);
+
+alter table public.log_events enable row level security;
+grant select, insert, delete on public.log_events to authenticated;
+create policy "lire ses evenements"
+    on public.log_events for select
+    to authenticated
+    using((select auth.uid() = user_id));
+
+create policy "ajouter des events aux imports"
+    on public.log_events for insert
+    to authenticated
+    with check(select auth.uid() = user_id 
+    and exists (
+        select 1 from public.log_imports i where i.id = import_id and i.user_id = (select auth.uid())
+        )
+    );
+create policy "supprimer ses events"
+    on public.log_events for delete
+    to authenticated
+    using((select auth.uid() = user_id));
