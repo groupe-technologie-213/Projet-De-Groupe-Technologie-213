@@ -2,7 +2,7 @@ Create table public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   username text,
   avatar_url text,
-  created_at timestamp not null default now()
+  created_at timestamptz not null default now()
 );
 
 create function public.handle_new_user()
@@ -50,7 +50,7 @@ create table public.log_imports (
     status text not null default 'pending' check (status in ('pending', 'analyzed', 'failed')),
     total_lines integer not null default 0,
     invalid_lines integer not null default 0,
-    created_at timestamp not null default now(),
+    created_at timestamptz not null default now(),
     analyzed_at timestamptz
 );
 
@@ -126,8 +126,8 @@ create table public.alerts (
     event_count integer not null default 0,
     ip_info jsonb,
     notes text,
-    created_at timestamp not null default now(),
-    updated_at timestamp not null default now()
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
 );
 
 create index alerts_user_status_idx on public.alerts (user_id, status);
