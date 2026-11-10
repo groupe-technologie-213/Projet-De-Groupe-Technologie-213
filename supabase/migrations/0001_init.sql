@@ -76,3 +76,16 @@ create policy "modifier ses imports"
 create policy "supprimer ses imports"
     on public.log_imports for delete to authenticated
     using((select auth.uid() = user_id));
+
+create table public.log_events (
+    id uuid primary key default gen_random_uuid(),
+    import_id uuid not null references public.log_imports (id) on delete cascade,
+    user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+    occurred_at timestamptz not null,
+    username text not null,
+    source_ip inet not null,
+    event_type text not null check (event_type in ('login_success', 'login_failure', 'password_change', 'logout')),
+    user_agent text );
+
+create index log_events_user_time_idx on public.log_events (import_id, username, occurred_at);
+create index log_events_import_ip_time_idx  on public.log_events (import_id, source_ip, occurred_at);
