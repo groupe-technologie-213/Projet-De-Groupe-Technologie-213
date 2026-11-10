@@ -40,4 +40,18 @@ create policy "modifier son propre profil"
     to authenticated
     using((select auth.uid() = id))
     with check((select auth.uid() = id));
-    
+
+create table public.log_imports (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+    name text not null,
+    file_name text,
+    file_format text not null check (file_format in ('csv', 'json')),
+    status text not null default 'pending' check (status in ('pending', 'analyzed', 'failed')),
+    total_lines integer not null default 0,
+    invalid_lines integer not null default 0,
+    created_at timestamp not null default now(),
+    analyzed_at timestamptz
+);
+
+create index log_imports_user_id_idx on public.log_imports (user_id);
