@@ -132,3 +132,34 @@ create table public.alerts (
 create index alerts_user_status_idx on public.alerts (user_id, status);
 create index alerts_user_severity_idx on public.alerts (user_id, severity);
 create index alerts_import_id_idx on public.alerts (import_id);
+
+alter table public.alerts enable row level security;
+grant select, insert, update, delete on public.alerts to authenticated;
+
+create policy "lire ses alertes"
+    on public.alerts for select
+    to authenticated
+    using((select auth.uid() = user_id));
+
+create policy "creer des alertes sur ses imports"
+    on public.alerts for insert
+    to authenticated
+    with check(select auth.uid() = user_id 
+    and exists (
+        select 1 from public.log_imports i where i.id = import_id and i.user_id = (select auth.uid())
+        )
+    );
+create policy "modifier ses alertes"
+    on public.alerts for update
+    to authenticated
+    using((select auth.uid()) = user_id)
+    with check((select auth.uid()) = user_id 
+    and (import_id is null or exists (
+        select 1 from public.log_imports i where i.id = import_id and i.user_id = (select auth.uid())
+        )
+    ));
+create policy "supprimer ses alertes"
+    on public.alerts for delete
+    to authenticated
+    using((select auth.uid()) = user_id);
+
