@@ -145,11 +145,11 @@ create policy "lire ses alertes"
 create policy "creer des alertes sur ses imports"
     on public.alerts for insert
     to authenticated
-    with check(select auth.uid() = user_id 
-    and exists (
+    with check((select auth.uid()) = user_id
+    and (import_id is null or exists (
         select 1 from public.log_imports i where i.id = import_id and i.user_id = (select auth.uid())
         )
-    );
+    ));
 create policy "modifier ses alertes"
     on public.alerts for update
     to authenticated
