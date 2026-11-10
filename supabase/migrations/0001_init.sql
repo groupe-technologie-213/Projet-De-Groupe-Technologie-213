@@ -56,7 +56,7 @@ create table public.log_imports (
 
 create index log_imports_user_id_idx on public.log_imports (user_id);
 alter table public.log_imports enable row level security;
-grant select, insert, update on public.log_imports to authenticated;
+grant select, insert, update, delete on public.log_imports to authenticated;
 
 create policy "lire ses imports"
     on public.log_imports for select
