@@ -119,12 +119,13 @@ create table public.alerts (
     status text not null default 'open' check (status in ('open', 'investigating', 'resolved', 'false_positive')),
     title text not null,
     explanation text not null,
-    username text[] not null default '{}',
+    usernames text[] not null default '{}',
     source_ips text[] not null default '{}',
     first_seen timestamptz,
     last_seen timestamptz,
     event_count integer not null default 0,
     ip_info jsonb,
+    notes text,
     created_at timestamp not null default now(),
     updated_at timestamp not null default now()
 );
