@@ -5,7 +5,7 @@ export type LogImport = Tables<"log_imports">
 export type LogEvent = Tables<"log_events">
 export type Alert = Tables<"alerts">
 
-export type Newlogevent = TablesInsert<"log_events">
+export type NewLogEvent = TablesInsert<"log_events">
 export type NewAlert = TablesInsert<"alerts">
 
 export type EventType = "login_success" | "login_failure" | "logout" | "password_change"
