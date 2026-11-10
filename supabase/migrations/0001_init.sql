@@ -33,13 +33,13 @@ grant select, update on public.profiles to authenticated;
 create policy "lire son propre profil"
     on public.profiles for select
     to authenticated
-    using((select auth.uid() = id));
+    using((select auth.uid()) = id);
 
 create policy "modifier son propre profil"
     on public.profiles for update
     to authenticated
-    using((select auth.uid() = id))
-    with check((select auth.uid() = id));
+    using((select auth.uid()) = id)
+    with check((select auth.uid()) = id);
 
 create table public.log_imports (
     id uuid primary key default gen_random_uuid(),
@@ -61,21 +61,21 @@ grant select, insert, update, delete on public.log_imports to authenticated;
 create policy "lire ses imports"
     on public.log_imports for select
     to authenticated
-    using((select auth.uid() = user_id));
+    using((select auth.uid()) = user_id);
 
 create policy "creer ses imports"
     on public.log_imports for insert
     to authenticated
-    with check((select auth.uid() = user_id));
+    with check((select auth.uid()) = user_id);
 
 create policy "modifier ses imports"
     on public.log_imports for update to authenticated
-    using((select auth.uid() = user_id))
-    with check((select auth.uid() = user_id));
+    using((select auth.uid()) = user_id)
+    with check((select auth.uid()) = user_id);
 
 create policy "supprimer ses imports"
     on public.log_imports for delete to authenticated
-    using((select auth.uid() = user_id));
+    using((select auth.uid()) = user_id);
 
 create table public.log_events (
     id uuid primary key default gen_random_uuid(),
@@ -95,12 +95,12 @@ grant select, insert, delete on public.log_events to authenticated;
 create policy "lire ses evenements"
     on public.log_events for select
     to authenticated
-    using((select auth.uid() = user_id));
+    using((select auth.uid()) = user_id);
 
 create policy "ajouter des events aux imports"
     on public.log_events for insert
     to authenticated
-    with check(select auth.uid() = user_id 
+    with check((select auth.uid()) = user_id 
     and exists (
         select 1 from public.log_imports i where i.id = import_id and i.user_id = (select auth.uid())
         )
@@ -108,7 +108,7 @@ create policy "ajouter des events aux imports"
 create policy "supprimer ses events"
     on public.log_events for delete
     to authenticated
-    using((select auth.uid() = user_id));
+    using((select auth.uid()) = user_id);
 
 create table public.alerts (
     id uuid primary key default gen_random_uuid(),
@@ -140,7 +140,7 @@ grant select, insert, update, delete on public.alerts to authenticated;
 create policy "lire ses alertes"
     on public.alerts for select
     to authenticated
-    using((select auth.uid() = user_id));
+    using((select auth.uid()) = user_id);
 
 create policy "creer des alertes sur ses imports"
     on public.alerts for insert
