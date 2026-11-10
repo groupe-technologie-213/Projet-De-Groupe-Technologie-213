@@ -1,0 +1,17 @@
+timestamp,ip_address,event_type,username,user_agent
+2026-11-10T09:00:01Z,185.220.101.42,login_failure,admin@logsentinel.io,Mozilla/5.0
+2026-11-10T09:00:03Z,185.220.101.42,login_failure,admin@logsentinel.io,Mozilla/5.0
+2026-11-10T09:00:05Z,185.220.101.42,login_failure,admin@logsentinel.io,Mozilla/5.0
+2026-11-10T09:00:07Z,185.220.101.42,login_failure,admin@logsentinel.io,Mozilla/5.0
+2026-11-10T09:00:09Z,185.220.101.42,login_failure,admin@logsentinel.io,Mozilla/5.0
+2026-11-10T09:00:11Z,185.220.101.42,login_failure,admin@logsentinel.io,Mozilla/5.0
+2026-11-10T09:00:14Z,185.220.101.42,login_success,admin@logsentinel.io,Mozilla/5.0
+2026-11-10T09:05:00Z,45.155.205.10,login_failure,alice@logsentinel.io,python-requests/2.31
+2026-11-10T09:05:02Z,45.155.205.10,login_failure,bob@logsentinel.io,python-requests/2.31
+2026-11-10T09:05:04Z,45.155.205.10,login_failure,charlie@logsentinel.io,python-requests/2.31
+2026-11-10T09:05:06Z,45.155.205.10,login_failure,david@logsentinel.io,python-requests/2.31
+2026-11-10T09:05:08Z,45.155.205.10,login_failure,eve@logsentinel.io,python-requests/2.31
+2026-11-10T09:05:10Z,45.155.205.10,login_failure,frank@logsentinel.io,python-requests/2.31
+not-a-date,192.168.1.10,login_success,alice@logsentinel.io,Mozilla/5.0
+2026-11-10T09:10:00Z,999.999.999.999,login_failure,alice@logsentinel.io,Mozilla/5.0
+2026-11-10T09:10:05Z,192.168.1.10,INVALID_EVENT,alice@logsentinel.io,Mozilla/5.0
