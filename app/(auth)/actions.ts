@@ -40,7 +40,7 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
     return { error: "Le mot de passe doit contenir au moins 8 caractères." }
   }
 
-  // Adresse du site (localhost en développement, Vercel en production)
+ 
   const origin = (await headers()).get("origin") ?? "http://localhost:3000"
 
   const supabase = await createClient()
@@ -48,7 +48,6 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
     email,
     password,
     options: {
-      // Le lien de l'email de confirmation renverra ici (étape 14)
       emailRedirectTo: `${origin}/auth/callback`,
     },
   })
@@ -61,4 +60,23 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
   }
 
   return { message: "Compte créé ! Vérifie tes emails pour confirmer ton adresse." }
+}
+
+export async function signInWithGithub(formData: FormData) {
+  const redirectTo = safeRedirect(formData.get("redirect") as string | null)
+  const origin = (await headers()).get("origin") ?? "http://localhost:3000"
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "github",
+    options: {
+      redirectTo: `${origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
+    },
+  })
+
+  if (error || !data.url) {
+    redirect("/login?error=github")
+  }
+
+  redirect(data.url)
 }
