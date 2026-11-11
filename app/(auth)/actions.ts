@@ -9,6 +9,9 @@ export type AuthState = {
   message?: string
 }
 
+async function getOrigin() {
+  return (await headers()).get("origin") ?? "http://localhost:3000"
+}
 export async function signIn(_prevState: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim()
   const password = String(formData.get("password") ?? "")
@@ -41,8 +44,7 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
   }
 
  
-  const origin = (await headers()).get("origin") ?? "http://localhost:3000"
-
+  const origin = await getOrigin()
   const supabase = await createClient()
   const { error } = await supabase.auth.signUp({
     email,
@@ -64,7 +66,7 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
 
 export async function signInWithGithub(formData: FormData) {
   const redirectTo = safeRedirect(formData.get("redirect") as string | null)
-  const origin = (await headers()).get("origin") ?? "http://localhost:3000"
+  const origin = await getOrigin()
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signInWithOAuth({
