@@ -204,4 +204,25 @@ describe("Écriture : personne ne touche aux données des autres", () => {
       ),
     ).rejects.toThrow("permission denied")
   })
+
+  it("Alice peut créer une alerte manuelle sans import", async () => {
+    const result = await asUser(ALICE, () =>
+      db.query(
+        "insert into public.alerts (rule, severity, title, explanation) values ('manual', 'medium', 'Alerte manuelle', 'Créée à la main')",
+      ),
+    )
+    expect(result.affectedRows).toBe(1)
+  })
+
+  // Doit rester le DERNIER test : il supprime les données d'Alice
+  it("supprimer son import supprime aussi ses événements et ses alertes (cascade)", async () => {
+    const result = await asUser(ALICE, () => db.query("delete from public.log_imports where id = $1", [aliceImportId]))
+    expect(result.affectedRows).toBe(1)
+
+    const { rows } = await db.query<{ events: number; alerts: number }>(
+      "select (select count(*)::int from public.log_events where import_id = $1) as events, (select count(*)::int from public.alerts where import_id = $1) as alerts",
+      [aliceImportId],
+    )
+    expect(rows[0]).toEqual({ events: 0, alerts: 0 })
+  })
 })
