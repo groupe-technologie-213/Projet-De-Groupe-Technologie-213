@@ -134,3 +134,74 @@ describe("Lecture : chacun ne voit que ses données", () => {
     }
   })
 })
+
+describe("Écriture : personne ne touche aux données des autres", () => {
+  it("Bob ne peut pas renommer l'import d'Alice", async () => {
+    const result = await asUser(BOB, () =>
+      db.query("update public.log_imports set name = 'Piraté' where id = $1", [aliceImportId]),
+    )
+    expect(result.affectedRows).toBe(0)
+
+    // Vérification en administrateur : le nom n'a pas changé
+    const { rows } = await db.query<{ name: string }>("select name from public.log_imports where id = $1", [
+      aliceImportId,
+    ])
+    expect(rows[0].name).toBe("Import d'Alice")
+  })
+
+  it("Bob ne peut pas modifier une alerte d'Alice", async () => {
+    const result = await asUser(BOB, () =>
+      db.query("update public.alerts set status = 'resolved' where import_id = $1", [aliceImportId]),
+    )
+    expect(result.affectedRows).toBe(0)
+  })
+
+  it("Bob ne peut pas supprimer l'import d'Alice", async () => {
+    const result = await asUser(BOB, () => db.query("delete from public.log_imports where id = $1", [aliceImportId]))
+    expect(result.affectedRows).toBe(0)
+
+    // Vérification en administrateur : l'import existe toujours
+    const { rows } = await db.query("select id from public.log_imports where id = $1", [aliceImportId])
+    expect(rows).toHaveLength(1)
+  })
+
+  it("Bob ne peut pas ajouter d'événement dans l'import d'Alice", async () => {
+    await expect(
+      asUser(BOB, () =>
+        db.query(
+          "insert into public.log_events (import_id, occurred_at, username, source_ip, event_type) values ($1, now(), 'admin', '1.2.3.4', 'login_success')",
+          [aliceImportId],
+        ),
+      ),
+    ).rejects.toThrow("row-level security")
+  })
+
+  it("Bob ne peut pas créer d'alerte sur l'import d'Alice", async () => {
+    await expect(
+      asUser(BOB, () =>
+        db.query(
+          "insert into public.alerts (import_id, rule, severity, title, explanation) values ($1, 'manual', 'low', 'Fausse alerte', 'Test')",
+          [aliceImportId],
+        ),
+      ),
+    ).rejects.toThrow("row-level security")
+  })
+
+  it("Bob ne peut pas créer un import au nom d'Alice", async () => {
+    await expect(
+      asUser(BOB, () =>
+        db.query("insert into public.log_imports (user_id, name, file_format) values ($1, 'Usurpation', 'csv')", [
+          ALICE,
+        ]),
+      ),
+    ).rejects.toThrow("row-level security")
+  })
+
+  it("personne ne peut modifier un événement, même son propriétaire", async () => {
+    await expect(
+      asUser(ALICE, () =>
+        db.query("update public.log_events set username = 'autre' where import_id = $1", [aliceImportId]),
+      ),
+    ).rejects.toThrow("permission denied")
+  })
+})
