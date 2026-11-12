@@ -29,7 +29,7 @@ const SUPABASE_STUB = `
 `
 
 let db: PGlite
-
+let aliceImportId: string
 // Exécute fn « en tant que » userId : rôle authenticated + identifiant dans le jeton,
 // exactement comme une requête venant de l'application.
 async function asUser<T>(userId: string, fn: () => Promise<T>): Promise<T> {
@@ -53,7 +53,28 @@ beforeAll(async () => {
   // Alice et Bob s'inscrivent (le trigger doit créer leurs profils)
   await db.query(
     "insert into auth.users (id, email) values ($1, 'alice@example.com'), ($2, 'bob@example.com')",
-    [ALICE, BOB],
+        [ALICE, BOB],
+  )
+
+  // Alice crée un import, un événement et une alerte (en tant qu'Alice, via la RLS)
+  const { rows } = await asUser(ALICE, () =>
+    db.query<{ id: string }>(
+      "insert into public.log_imports (name, file_format) values ('Import d''Alice', 'csv') returning id",
+    ),
+  )
+  aliceImportId = rows[0].id
+
+  await asUser(ALICE, () =>
+    db.query(
+      "insert into public.log_events (import_id, occurred_at, username, source_ip, event_type) values ($1, now(), 'admin', '185.220.101.4', 'login_failure')",
+      [aliceImportId],
+    ),
+  )
+  await asUser(ALICE, () =>
+    db.query(
+      "insert into public.alerts (import_id, rule, severity, title, explanation) values ($1, 'brute_force', 'critical', 'Force brute sur admin', 'Alerte de test')",
+      [aliceImportId],
+    ),
   )
 })
 
@@ -70,5 +91,46 @@ describe("Préparation", () => {
   it("simule bien l'utilisateur connecté", async () => {
     const { rows } = await asUser(ALICE, () => db.query<{ id: string }>("select auth.uid() as id"))
     expect(rows[0].id).toBe(ALICE)
+  })
+})
+describe("Lecture : chacun ne voit que ses données", () => {
+  it("Alice voit son import, son événement et son alerte (témoin)", async () => {
+    const imports = await asUser(ALICE, () => db.query("select id from public.log_imports"))
+    const events = await asUser(ALICE, () => db.query("select id from public.log_events"))
+    const alerts = await asUser(ALICE, () => db.query("select id from public.alerts"))
+
+    expect(imports.rows).toHaveLength(1)
+    expect(events.rows).toHaveLength(1)
+    expect(alerts.rows).toHaveLength(1)
+  })
+
+  it("Bob ne voit aucun import d'Alice", async () => {
+    const { rows } = await asUser(BOB, () => db.query("select id from public.log_imports"))
+    expect(rows).toHaveLength(0)
+  })
+
+  it("Bob ne voit aucun événement d'Alice", async () => {
+    const { rows } = await asUser(BOB, () => db.query("select id from public.log_events"))
+    expect(rows).toHaveLength(0)
+  })
+
+  it("Bob ne voit aucune alerte d'Alice", async () => {
+    const { rows } = await asUser(BOB, () => db.query("select id from public.alerts"))
+    expect(rows).toHaveLength(0)
+  })
+
+  it("Bob ne voit que son propre profil", async () => {
+    const { rows } = await asUser(BOB, () => db.query<{ id: string }>("select id from public.profiles"))
+    expect(rows).toHaveLength(1)
+    expect(rows[0].id).toBe(BOB)
+  })
+
+  it("un visiteur non connecté n'a accès à rien", async () => {
+    await db.exec("set role anon")
+    try {
+      await expect(db.query("select id from public.log_imports")).rejects.toThrow("permission denied")
+    } finally {
+      await db.exec("reset role")
+    }
   })
 })
