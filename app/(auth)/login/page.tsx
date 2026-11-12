@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { GithubButton } from "@/components/auth/GithubButton"
-
+import { LoginForm } from "@/components/auth/LoginForm"
 
 const ERROR_MESSAGES: Record<string, string> = {
   github: "La connexion avec GitHub a échoué. Réessaie.",
@@ -28,6 +28,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             {errorMessage}
           </p>
         )}
+
+        <LoginForm redirectTo={redirectTo} />
+
+        <div className="flex items-center gap-3 text-xs uppercase text-gray-400">
+          <span className="h-px flex-1 bg-gray-200" />
+          ou
+          <span className="h-px flex-1 bg-gray-200" />
+        </div>
 
         <GithubButton redirectTo={redirectTo} />
 
