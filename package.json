@@ -27,7 +27,8 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "eslint --fix",
-    "test:unit": "vitest run",
+    "tests:unit": "vitest run",
+    "test:rls": "vitest run tests/rls",
     "tests:unit": "vitest run"
   }
 }
