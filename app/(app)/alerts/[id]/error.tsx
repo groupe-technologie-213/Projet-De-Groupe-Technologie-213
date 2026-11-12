@@ -1,11 +1,77 @@
-"use client"
+"use client";
 
-// TODO (Membre 4) : message d'erreur clair
-export default function Error({ reset }: { error: Error; reset: () => void }) {
+import { useEffect } from "react";
+import Link from "next/link";
+
+type AlertDetailErrorProps = {
+  error: Error & { digest?: string };
+  reset: () => void;
+};
+
+export default function AlertDetailError({
+  error,
+  reset,
+}: AlertDetailErrorProps) {
+  useEffect(() => {
+    console.error("Erreur du détail de l'alerte :", error);
+  }, [error]);
+
   return (
-    <div>
-      <p>Une erreur est survenue.</p>
-      <button onClick={() => reset()}>Réessayer</button>
+    <div className="flex min-h-[70vh] items-center justify-center px-6 py-12">
+      <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+
+        {/* Icône d'erreur */}
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-3xl">
+          ⚠️
+        </div>
+
+        {/* Titre */}
+        <h1 className="text-2xl font-bold text-gray-900">
+          Impossible de charger cette alerte
+        </h1>
+
+        {/* Description */}
+        <p className="mt-3 leading-6 text-gray-600">
+          Une erreur est survenue lors de la récupération des détails
+          de cette alerte de sécurité. Elle peut être temporaire ou
+          liée à un problème de connexion.
+        </p>
+
+        {/* Référence technique */}
+        {error.digest && (
+          <p className="mt-4 text-xs text-gray-400">
+            Référence de l'erreur : {error.digest}
+          </p>
+        )}
+
+        {/* Boutons */}
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+
+          <button
+            onClick={() => reset()}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-700"
+          >
+            <span>↻</span>
+            Réessayer
+          </button>
+
+          <Link
+            href="/alerts"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-5 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+          >
+            <span>←</span>
+            Retour aux alertes
+          </Link>
+
+        </div>
+
+        {/* Pied de page */}
+        <p className="mt-6 text-xs text-gray-400">
+          LogSentinel — Surveillance et détection des menaces
+        </p>
+
+      </div>
     </div>
-  )
+  );
 }
+
