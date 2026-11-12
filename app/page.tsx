@@ -1,4 +1,9 @@
-// TODO (Membre 1 : page d'accueil ou redirection vers /dashboard)
-export default function Page() {
-  return <h1>LogSentinel</h1>
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+
+export default async function HomePage() {
+  const supabase = await createClient()
+  const { data } = await supabase.auth.getClaims()
+
+  redirect(data?.claims ? "/dashboard" : "/login")
 }
