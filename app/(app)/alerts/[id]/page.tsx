@@ -1,6 +1,8 @@
+import { updateAlertStatus } from "../actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -99,13 +101,45 @@ export default async function AlertDetailPage({ params }: Props) {
           </p>
         </div>
 
-        <span
-          className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${
-            statusStyles[alert.status] || "bg-gray-100 text-gray-700"
-          }`}
-        >
-          {statusLabels[alert.status] || alert.status}
-        </span>
+    <div className="flex flex-col gap-3 sm:items-end">
+  <span
+    className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${
+      statusStyles[alert.status] || "bg-gray-100 text-gray-700"
+    }`}
+  >
+    {statusLabels[alert.status] || alert.status}
+  </span>
+
+  <form
+    action={updateAlertStatus}
+    className="flex flex-col gap-2 sm:flex-row"
+  >
+    <input
+      type="hidden"
+      name="alert_id"
+      value={alert.id}
+    />
+
+    <select
+      name="status"
+      defaultValue={alert.status}
+      className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+      aria-label="Nouveau statut de l'alerte"
+    >
+      <option value="open">Ouverte</option>
+      <option value="investigating">En investigation</option>
+      <option value="resolved">Résolue</option>
+      <option value="false_positive">Faux positif</option>
+    </select>
+
+    <button
+      type="submit"
+      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+    >
+      Modifier le statut
+    </button>
+  </form>
+</div>
       </div>
 
       {/* Informations principales */}
