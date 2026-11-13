@@ -166,3 +166,45 @@ export async function updateAlertStatus(formData: FormData) {
 
   redirect(`/alerts/${alertId}`);
 }
+export async function deleteAlert(formData: FormData) {
+  const supabase = await createClient();
+
+  // Vérifier l'utilisateur connecté
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error("Vous devez être connecté pour supprimer une alerte.");
+  }
+
+  const alertId = String(formData.get("alert_id") ?? "").trim();
+
+  if (!alertId) {
+    throw new Error("Identifiant de l'alerte manquant.");
+  }
+
+  // Supprimer uniquement une alerte appartenant à l'utilisateur
+  const { data, error } = await supabase
+    .from("alerts")
+    .delete()
+    .eq("id", alertId)
+    .eq("user_id", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    console.error("Erreur suppression alerte :", error);
+    throw new Error("Impossible de supprimer cette alerte.");
+  }
+
+  if (!data) {
+    throw new Error("Alerte introuvable ou accès non autorisé.");
+  }
+
+  revalidatePath("/alerts");
+  revalidatePath("/dashboard");
+
+  redirect("/alerts");
+}

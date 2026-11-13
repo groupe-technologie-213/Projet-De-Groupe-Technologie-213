@@ -2,6 +2,7 @@ import { updateAlertStatus } from "../actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import DeleteAlertButton from "./deleteAlertButton";
 
 
 type Props = {
@@ -282,15 +283,22 @@ export default async function AlertDetailPage({ params }: Props) {
       </section>
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href="/alerts"
-          className="rounded-lg border px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Retour à la liste
-        </Link>
-      </div>
+       <div className="flex flex-wrap items-start gap-3">
+  <Link
+    href="/alerts"
+    className="rounded-lg border px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+  >
+    Retour à la liste
+  </Link>
+
+  <DeleteAlertButton alertId={alert.id} />
+</div>
+      
     </div>
+
+    
   );
+ 
 }
+
 
