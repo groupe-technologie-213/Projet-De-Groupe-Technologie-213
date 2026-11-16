@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import DeleteAlertButton from "./deleteAlertButton";
 
-
 type Props = {
   params: Promise<{ id: string }>;
 };
@@ -81,6 +80,49 @@ export default async function AlertDetailPage({ params }: Props) {
     notFound();
   }
 
+  // Chronologie construite à partir des dates déjà disponibles.
+  const timeline = [
+    {
+      id: "created",
+      title: "Alerte créée",
+      description: "L'alerte a été enregistrée dans LogSentinel.",
+      date: alert.created_at,
+      icon: "+",
+      color: "bg-blue-100 text-blue-700",
+    },
+    {
+      id: "first_seen",
+      title: "Première détection",
+      description: "Première apparition de l'événement détecté.",
+      date: alert.first_seen,
+      icon: "◷",
+      color: "bg-purple-100 text-purple-700",
+    },
+    {
+      id: "last_seen",
+      title: "Dernière détection",
+      description: "Dernière apparition connue de l'événement.",
+      date: alert.last_seen,
+      icon: "◷",
+      color: "bg-purple-100 text-purple-700",
+    },
+    {
+      id: "updated",
+      title: "Dernière modification",
+      description: `Statut actuel : ${
+        statusLabels[alert.status] || alert.status
+      }.`,
+      date: alert.updated_at,
+      icon: "↻",
+      color: "bg-green-100 text-green-700",
+    },
+  ]
+    .filter((event) => event.date)
+    .sort(
+      (a, b) =>
+        new Date(b.date!).getTime() - new Date(a.date!).getTime()
+    );
+
   return (
     <div className="space-y-8 p-6 md:p-8">
       {/* En-tête */}
@@ -102,45 +144,45 @@ export default async function AlertDetailPage({ params }: Props) {
           </p>
         </div>
 
-    <div className="flex flex-col gap-3 sm:items-end">
-  <span
-    className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${
-      statusStyles[alert.status] || "bg-gray-100 text-gray-700"
-    }`}
-  >
-    {statusLabels[alert.status] || alert.status}
-  </span>
+        <div className="flex flex-col gap-3 sm:items-end">
+          <span
+            className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${
+              statusStyles[alert.status] || "bg-gray-100 text-gray-700"
+            }`}
+          >
+            {statusLabels[alert.status] || alert.status}
+          </span>
 
-  <form
-    action={updateAlertStatus}
-    className="flex flex-col gap-2 sm:flex-row"
-  >
-    <input
-      type="hidden"
-      name="alert_id"
-      value={alert.id}
-    />
+          <form
+            action={updateAlertStatus}
+            className="flex flex-col gap-2 sm:flex-row"
+          >
+            <input
+              type="hidden"
+              name="alert_id"
+              value={alert.id}
+            />
 
-    <select
-      name="status"
-      defaultValue={alert.status}
-      className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-      aria-label="Nouveau statut de l'alerte"
-    >
-      <option value="open">Ouverte</option>
-      <option value="investigating">En investigation</option>
-      <option value="resolved">Résolue</option>
-      <option value="false_positive">Faux positif</option>
-    </select>
+            <select
+              name="status"
+              defaultValue={alert.status}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+              aria-label="Nouveau statut de l'alerte"
+            >
+              <option value="open">Ouverte</option>
+              <option value="investigating">En investigation</option>
+              <option value="resolved">Résolue</option>
+              <option value="false_positive">Faux positif</option>
+            </select>
 
-    <button
-      type="submit"
-      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-    >
-      Modifier le statut
-    </button>
-  </form>
-</div>
+            <button
+              type="submit"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Modifier le statut
+            </button>
+          </form>
+        </div>
       </div>
 
       {/* Informations principales */}
@@ -282,23 +324,69 @@ export default async function AlertDetailPage({ params }: Props) {
         </div>
       </section>
 
+      {/* Chronologie visuelle */}
+      <section className="rounded-xl border bg-white p-6 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-gray-900">
+            Chronologie de l'alerte
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Les principales dates connues de cette alerte.
+          </p>
+        </div>
+
+        {timeline.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            Aucune date disponible pour cette alerte.
+          </p>
+        ) : (
+          <div className="relative space-y-6">
+            {timeline.map((event, index) => (
+              <div key={event.id} className="relative flex gap-4">
+                {index !== timeline.length - 1 && (
+                  <div className="absolute left-5 top-10 h-full w-px bg-gray-200" />
+                )}
+
+                <div
+                  className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold ${event.color}`}
+                >
+                  {event.icon}
+                </div>
+
+                <div className="min-w-0 flex-1 pb-2">
+                  <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
+                    <h3 className="font-semibold text-gray-900">
+                      {event.title}
+                    </h3>
+
+                    <span className="text-xs text-gray-500">
+                      {formatDate(event.date)}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-sm text-gray-600">
+                    {event.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Actions */}
-       <div className="flex flex-wrap items-start gap-3">
-  <Link
-    href="/alerts"
-    className="rounded-lg border px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
-  >
-    Retour à la liste
-  </Link>
+      <div className="flex flex-wrap items-start gap-3">
+        <Link
+          href="/alerts"
+          className="rounded-lg border px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Retour à la liste
+        </Link>
 
-  <DeleteAlertButton alertId={alert.id} />
-</div>
-      
+        <DeleteAlertButton alertId={alert.id} />
+      </div>
     </div>
-
-    
   );
- 
 }
 
 
