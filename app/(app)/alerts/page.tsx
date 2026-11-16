@@ -1,38 +1,40 @@
-import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 
 type Props = {
   searchParams: Promise<{
-    severity?: string
-    status?: string
-    rule?: string
-    search?: string
-  }>
-}
+    severity?: string;
+    status?: string;
+    rule?: string;
+    search?: string;
+    period?: string;
+  }>;
+};
 
 export default async function AlertsPage({ searchParams }: Props) {
-  const supabase = await createClient()
-  const params = await searchParams
+  const supabase = await createClient();
+  const params = await searchParams;
 
-  const severity = params.severity ?? ""
-  const status = params.status ?? ""
-  const rule = params.rule ?? ""
-  const search = params.search?.trim() ?? ""
+  const severity = params.severity ?? "";
+  const status = params.status ?? "";
+  const rule = params.rule ?? "";
+  const search = params.search?.trim() ?? "";
+  const period = params.period ?? "";
 
   // Vérifier la session
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return (
       <div className="rounded-xl border bg-white p-6">
         Veuillez vous connecter pour consulter vos alertes.
       </div>
-    )
+    );
   }
 
-  // Récupération des statistiques
+  // Récupération des statistiques globales
   const [
     totalQuery,
     openQuery,
@@ -43,7 +45,7 @@ export default async function AlertsPage({ searchParams }: Props) {
     supabase.from("alerts").select("*", { count: "exact", head: true }).eq("status", "open"),
     supabase.from("alerts").select("*", { count: "exact", head: true }).eq("severity", "critical"),
     supabase.from("alerts").select("*", { count: "exact", head: true }).eq("status", "resolved"),
-  ])
+  ]);
 
   // Construction de la requête des alertes
   let query = supabase
@@ -60,20 +62,21 @@ export default async function AlertsPage({ searchParams }: Props) {
       event_count,
       created_at
     `)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: false });
 
-  if (
-    ["low", "medium", "high", "critical"].includes(severity)
-  ) {
-    query = query.eq("severity", severity)
+  // Filtre par gravité
+  if (["low", "medium", "high", "critical"].includes(severity)) {
+    query = query.eq("severity", severity);
   }
 
+  // Filtre par statut
   if (
     ["open", "investigating", "resolved", "false_positive"].includes(status)
   ) {
-    query = query.eq("status", status)
+    query = query.eq("status", status);
   }
 
+  // Filtre par règle
   if (
     [
       "brute_force",
@@ -84,35 +87,53 @@ export default async function AlertsPage({ searchParams }: Props) {
       "manual",
     ].includes(rule)
   ) {
-    query = query.eq("rule", rule)
+    query = query.eq("rule", rule);
   }
 
+  // Filtre par période
+  const periodDurations: Record<string, number> = {
+    "24h": 24 * 60 * 60 * 1000,
+    "7d": 7 * 24 * 60 * 60 * 1000,
+    "30d": 30 * 24 * 60 * 60 * 1000,
+  };
+
+  if (periodDurations[period]) {
+    const cutoffDate = new Date(
+      Date.now() - periodDurations[period]
+    ).toISOString();
+
+    query = query.gte("created_at", cutoffDate);
+  }
+
+  // Recherche par titre
   if (search) {
-    query = query.ilike("title", `%${search}%`)
+    query = query.ilike("title", `%${search}%`);
   }
 
-  const { data: alerts, error } = await query
+  const { data: alerts, error } = await query;
 
+  // Libellés des gravités
   const severityLabels: Record<string, string> = {
     low: "Faible",
     medium: "Moyenne",
     high: "Haute",
     critical: "Critique",
-  }
+  };
 
   const severityColors: Record<string, string> = {
     low: "bg-gray-100 text-gray-700",
     medium: "bg-yellow-100 text-yellow-800",
     high: "bg-orange-100 text-orange-800",
     critical: "bg-red-100 text-red-800",
-  }
+  };
 
+  // Libellés des statuts
   const statusLabels: Record<string, string> = {
     open: "Ouverte",
     investigating: "En investigation",
     resolved: "Résolue",
     false_positive: "Faux positif",
-  }
+  };
 
   const ruleLabels: Record<string, string> = {
     brute_force: "Force brute",
@@ -121,13 +142,13 @@ export default async function AlertsPage({ searchParams }: Props) {
     off_hours: "Connexion hors horaires",
     new_ip: "Nouvelle adresse IP",
     manual: "Manuelle",
-  }
+  };
 
   const formatDate = (date: string) =>
     new Date(date).toLocaleString("fr-FR", {
       dateStyle: "short",
       timeStyle: "short",
-    })
+    });
 
   return (
     <main className="space-y-8">
@@ -151,9 +172,8 @@ export default async function AlertsPage({ searchParams }: Props) {
         </Link>
       </section>
 
-      {/* Statistiques */}
+      {/* Statistiques globales */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
         <StatCard
           title="Total des alertes"
           value={totalQuery.count ?? 0}
@@ -177,77 +197,143 @@ export default async function AlertsPage({ searchParams }: Props) {
           value={resolvedQuery.count ?? 0}
           icon="✅"
         />
-
       </section>
 
       {/* Filtres */}
       <section className="rounded-xl border bg-white p-5 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">
-          Rechercher et filtrer
-        </h2>
+        <div className="mb-5">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Rechercher et filtrer
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Combine plusieurs critères pour retrouver rapidement une alerte.
+          </p>
+        </div>
 
         <form
           action="/alerts"
           method="GET"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
         >
-          <input
-            type="text"
-            name="search"
-            defaultValue={search}
-            placeholder="Rechercher une alerte..."
-            className="rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
-          />
+          {/* Recherche */}
+          <div>
+            <label
+              htmlFor="search"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Recherche
+            </label>
+            <input
+              id="search"
+              type="text"
+              name="search"
+              defaultValue={search}
+              placeholder="Rechercher une alerte..."
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
 
-          <select
-            name="severity"
-            defaultValue={severity}
-            className="rounded-lg border border-gray-300 px-4 py-3 text-sm"
-          >
-            <option value="">Toutes les gravités</option>
-            <option value="low">Faible</option>
-            <option value="medium">Moyenne</option>
-            <option value="high">Haute</option>
-            <option value="critical">Critique</option>
-          </select>
+          {/* Gravité */}
+          <div>
+            <label
+              htmlFor="severity"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Gravité
+            </label>
+            <select
+              id="severity"
+              name="severity"
+              defaultValue={severity}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm"
+            >
+              <option value="">Toutes les gravités</option>
+              <option value="low">Faible</option>
+              <option value="medium">Moyenne</option>
+              <option value="high">Haute</option>
+              <option value="critical">Critique</option>
+            </select>
+          </div>
 
-          <select
-            name="status"
-            defaultValue={status}
-            className="rounded-lg border border-gray-300 px-4 py-3 text-sm"
-          >
-            <option value="">Tous les statuts</option>
-            <option value="open">Ouverte</option>
-            <option value="investigating">En investigation</option>
-            <option value="resolved">Résolue</option>
-            <option value="false_positive">Faux positif</option>
-          </select>
+          {/* Statut */}
+          <div>
+            <label
+              htmlFor="status"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Statut
+            </label>
+            <select
+              id="status"
+              name="status"
+              defaultValue={status}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm"
+            >
+              <option value="">Tous les statuts</option>
+              <option value="open">Ouverte</option>
+              <option value="investigating">En investigation</option>
+              <option value="resolved">Résolue</option>
+              <option value="false_positive">Faux positif</option>
+            </select>
+          </div>
 
-          <select
-            name="rule"
-            defaultValue={rule}
-            className="rounded-lg border border-gray-300 px-4 py-3 text-sm"
-          >
-            <option value="">Toutes les règles</option>
-            <option value="brute_force">Force brute</option>
-            <option value="password_spraying">Password spraying</option>
-            <option value="impossible_travel">Déplacement impossible</option>
-            <option value="off_hours">Connexion hors horaires</option>
-            <option value="new_ip">Nouvelle adresse IP</option>
-            <option value="manual">Manuelle</option>
-          </select>
+          {/* Période */}
+          <div>
+            <label
+              htmlFor="period"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Période de création
+            </label>
+            <select
+              id="period"
+              name="period"
+              defaultValue={period}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm"
+            >
+              <option value="">Toutes les périodes</option>
+              <option value="24h">Dernières 24 heures</option>
+              <option value="7d">7 derniers jours</option>
+              <option value="30d">30 derniers jours</option>
+            </select>
+          </div>
 
-          <div className="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-4">
+          {/* Règle */}
+          <div>
+            <label
+              htmlFor="rule"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Type de détection
+            </label>
+            <select
+              id="rule"
+              name="rule"
+              defaultValue={rule}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm"
+            >
+              <option value="">Toutes les règles</option>
+              <option value="brute_force">Force brute</option>
+              <option value="password_spraying">Password spraying</option>
+              <option value="impossible_travel">Déplacement impossible</option>
+              <option value="off_hours">Connexion hors horaires</option>
+              <option value="new_ip">Nouvelle adresse IP</option>
+              <option value="manual">Manuelle</option>
+            </select>
+          </div>
+
+          {/* Boutons */}
+          <div className="flex flex-wrap items-end gap-3">
             <button
               type="submit"
-              className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+              className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Appliquer les filtres
             </button>
 
             <Link
               href="/alerts"
-              className="rounded-lg border px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="rounded-lg border px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
             >
               Réinitialiser
             </Link>
@@ -258,7 +344,7 @@ export default async function AlertsPage({ searchParams }: Props) {
       {/* Tableau des alertes */}
       <section className="overflow-hidden rounded-xl border bg-white shadow-sm">
 
-        <div className="flex items-center justify-between border-b p-5">
+        <div className="flex flex-col justify-between gap-2 border-b p-5 sm:flex-row sm:items-center">
           <div>
             <h2 className="text-lg font-bold text-gray-900">
               Liste des alertes
@@ -267,6 +353,12 @@ export default async function AlertsPage({ searchParams }: Props) {
               {alerts?.length ?? 0} résultat(s) trouvé(s)
             </p>
           </div>
+
+          {(severity || status || rule || search || period) && (
+            <span className="w-fit rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+              Filtres actifs
+            </span>
+          )}
         </div>
 
         {error ? (
@@ -282,6 +374,12 @@ export default async function AlertsPage({ searchParams }: Props) {
             <p className="mt-2 text-sm text-gray-500">
               Aucune alerte ne correspond à tes critères de recherche.
             </p>
+            <Link
+              href="/alerts"
+              className="mt-4 inline-block text-sm font-semibold text-blue-600 hover:underline"
+            >
+              Effacer les filtres
+            </Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -302,7 +400,7 @@ export default async function AlertsPage({ searchParams }: Props) {
                 {alerts.map((alert) => (
                   <tr
                     key={alert.id}
-                    className="hover:bg-gray-50"
+                    className="transition hover:bg-gray-50"
                   >
                     <td className="max-w-xs px-5 py-4">
                       <p className="font-semibold text-gray-900">
@@ -355,9 +453,8 @@ export default async function AlertsPage({ searchParams }: Props) {
           </div>
         )}
       </section>
-
     </main>
-  )
+  );
 }
 
 function StatCard({
@@ -365,9 +462,9 @@ function StatCard({
   value,
   icon,
 }: {
-  title: string
-  value: number
-  icon: string
+  title: string;
+  value: number;
+  icon: string;
 }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -382,6 +479,6 @@ function StatCard({
         {value.toLocaleString("fr-FR")}
       </p>
     </div>
-  )
+  );
 }
 
