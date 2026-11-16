@@ -219,7 +219,8 @@ export default async function AlertsPage({ searchParams }: Props) {
         <form
           action="/alerts"
           method="GET"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5"
+
         >
           {/* Recherche */}
           <div>
