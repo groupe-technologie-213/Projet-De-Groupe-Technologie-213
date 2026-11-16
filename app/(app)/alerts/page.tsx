@@ -8,6 +8,7 @@ type Props = {
     rule?: string;
     search?: string;
     period?: string;
+    ip?: string
   }>;
 };
 
@@ -19,6 +20,7 @@ export default async function AlertsPage({ searchParams }: Props) {
   const status = params.status ?? "";
   const rule = params.rule ?? "";
   const search = params.search?.trim() ?? "";
+  const ip = params.ip?.trim() ?? ""
   const period = params.period ?? "";
 
   // Vérifier la session
@@ -109,6 +111,10 @@ export default async function AlertsPage({ searchParams }: Props) {
   if (search) {
     query = query.ilike("title", `%${search}%`);
   }
+  // Recherche par IP
+  if (ip) {
+  query = query.contains("source_ips", [ip])
+}
 
   const { data: alerts, error } = await query;
 
@@ -231,6 +237,18 @@ export default async function AlertsPage({ searchParams }: Props) {
               placeholder="Rechercher une alerte..."
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
+            <label
+              htmlFor="search"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >Recherche par IP</label>
+            <input
+              type="text"
+              name="ip"
+             defaultValue={ip}
+             placeholder="Ex. : 192.168.1.10"
+             aria-label="Rechercher par adresse IP"
+             className="rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
+/>
           </div>
 
           {/* Gravité */}
