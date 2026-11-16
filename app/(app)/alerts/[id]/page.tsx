@@ -81,47 +81,51 @@ export default async function AlertDetailPage({ params }: Props) {
   }
 
   // Chronologie construite à partir des dates déjà disponibles.
-  const timeline = [
-    {
-      id: "created",
-      title: "Alerte créée",
-      description: "L'alerte a été enregistrée dans LogSentinel.",
-      date: alert.created_at,
-      icon: "+",
-      color: "bg-blue-100 text-blue-700",
-    },
-    {
-      id: "first_seen",
-      title: "Première détection",
-      description: "Première apparition de l'événement détecté.",
-      date: alert.first_seen,
-      icon: "◷",
-      color: "bg-purple-100 text-purple-700",
-    },
-    {
-      id: "last_seen",
-      title: "Dernière détection",
-      description: "Dernière apparition connue de l'événement.",
-      date: alert.last_seen,
-      icon: "◷",
-      color: "bg-purple-100 text-purple-700",
-    },
-    {
-      id: "updated",
-      title: "Dernière modification",
-      description: `Statut actuel : ${
-        statusLabels[alert.status] || alert.status
-      }.`,
-      date: alert.updated_at,
-      icon: "↻",
-      color: "bg-green-100 text-green-700",
-    },
-  ]
-    .filter((event) => event.date)
-    .sort(
-      (a, b) =>
-        new Date(b.date!).getTime() - new Date(a.date!).getTime()
-    );
+ const securityEvents = [
+  {
+    id: "first_seen",
+    title: "Première détection",
+    description: "Première apparition de l'événement détecté.",
+    date: alert.first_seen,
+  },
+  {
+    id: "last_seen",
+    title: "Dernière détection",
+    description: "Dernière apparition connue de l'événement détecté.",
+    date: alert.last_seen,
+  },
+]
+  .filter((event) => event.date)
+  .sort(
+    (a, b) =>
+      new Date(b.date!).getTime() - new Date(a.date!).getTime()
+  );
+
+const alertEvents = [
+  {
+    id: "created",
+    title: "Alerte créée",
+    description: "L'alerte a été enregistrée dans LogSentinel.",
+    date: alert.created_at,
+    icon: "+",
+    color: "bg-blue-100 text-blue-700",
+  },
+  {
+    id: "updated",
+    title: "Dernière modification",
+    description: `Statut actuel : ${
+      statusLabels[alert.status] || alert.status
+    }.`,
+    date: alert.updated_at,
+    icon: "↻",
+    color: "bg-green-100 text-green-700",
+  },
+]
+  .filter((event) => event.date)
+  .sort(
+    (a, b) =>
+      new Date(b.date!).getTime() - new Date(a.date!).getTime()
+  );
 
   return (
     <div className="space-y-8 p-6 md:p-8">
@@ -325,54 +329,110 @@ export default async function AlertDetailPage({ params }: Props) {
       </section>
 
       {/* Chronologie visuelle */}
-      <section className="rounded-xl border bg-white p-6 shadow-sm">
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900">
-            Chronologie de l'alerte
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Les principales dates connues de cette alerte.
-          </p>
-        </div>
+     <section className="rounded-xl border bg-white p-6 shadow-sm">
+  <div className="mb-8">
+    <h2 className="text-lg font-bold text-gray-900">
+      Chronologie de l'alerte
+    </h2>
+    <p className="mt-1 text-sm text-gray-500">
+      Consultez les détections et les modifications de cette alerte.
+    </p>
+  </div>
 
-        {timeline.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            Aucune date disponible pour cette alerte.
-          </p>
-        ) : (
-          <div className="relative space-y-6">
-            {timeline.map((event, index) => (
-              <div key={event.id} className="relative flex gap-4">
-                {index !== timeline.length - 1 && (
-                  <div className="absolute left-5 top-10 h-full w-px bg-gray-200" />
-                )}
+  {/* Événements de sécurité */}
+  <div className="mb-8">
+    <div className="mb-5 flex items-center justify-between gap-3">
+      <h3 className="font-semibold text-gray-900">
+        Événements de sécurité
+      </h3>
+      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+        Détection
+      </span>
+    </div>
 
-                <div
-                  className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold ${event.color}`}
-                >
-                  {event.icon}
-                </div>
-
-                <div className="min-w-0 flex-1 pb-2">
-                  <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
-                    <h3 className="font-semibold text-gray-900">
-                      {event.title}
-                    </h3>
-
-                    <span className="text-xs text-gray-500">
-                      {formatDate(event.date)}
-                    </span>
-                  </div>
-
-                  <p className="mt-1 text-sm text-gray-600">
-                    {event.description}
-                  </p>
-                </div>
+    {securityEvents.length === 0 ? (
+      <p className="text-sm text-gray-500">
+        Aucune date de détection disponible.
+      </p>
+    ) : (
+      <div className="space-y-5">
+        {securityEvents.map((event, index) => (
+          <div key={event.id} className="relative flex gap-4">
+            <div className="relative flex flex-col items-center">
+              <div className="z-10 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
+                !
               </div>
-            ))}
+              {index !== securityEvents.length - 1 && (
+                <div className="absolute top-10 h-full w-px bg-blue-200" />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1 pb-2">
+              <h4 className="font-semibold text-gray-900">
+                {event.title}
+              </h4>
+              <p className="mt-1 text-sm text-gray-600">
+                {event.description}
+              </p>
+              <p className="mt-2 text-xs text-gray-400">
+                {formatDate(event.date)}
+              </p>
+            </div>
           </div>
-        )}
-      </section>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <div className="mb-8 border-t" />
+
+  {/* Modifications de l'alerte */}
+  <div>
+    <div className="mb-5 flex items-center justify-between gap-3">
+      <h3 className="font-semibold text-gray-900">
+        Modifications de l'alerte
+      </h3>
+      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+        Gestion
+      </span>
+    </div>
+
+    {alertEvents.length === 0 ? (
+      <p className="text-sm text-gray-500">
+        Aucune modification disponible.
+      </p>
+    ) : (
+      <div className="space-y-5">
+        {alertEvents.map((event, index) => (
+          <div key={event.id} className="relative flex gap-4">
+            <div className="relative flex flex-col items-center">
+              <div
+                className={`z-10 flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold ${event.color}`}
+              >
+                {event.icon}
+              </div>
+              {index !== alertEvents.length - 1 && (
+                <div className="absolute top-10 h-full w-px bg-gray-200" />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1 pb-2">
+              <h4 className="font-semibold text-gray-900">
+                {event.title}
+              </h4>
+              <p className="mt-1 text-sm text-gray-600">
+                {event.description}
+              </p>
+              <p className="mt-2 text-xs text-gray-400">
+                {formatDate(event.date)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
       {/* Actions */}
       <div className="flex flex-wrap items-start gap-3">
