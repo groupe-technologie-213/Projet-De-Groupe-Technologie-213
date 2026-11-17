@@ -120,7 +120,7 @@ auth.users ─1:1─ profiles
 ### 1. Prérequis
 
 - [Git](https://git-scm.com/)
-- [Node.js](https://nodejs.org/) version 20.9 ou plus (`node -v` pour vérifier)
+- [Node.js](https://nodejs.org/) **version 24 ou plus** (`node -v` pour vérifier), nécessaire pour `npm run dev` (voir [Dépannage](#-dépannage))
 - Une invitation au projet Supabase de l'équipe (demander au membre 1)
 
 ### 2. Cloner et installer
@@ -151,13 +151,24 @@ Puis ouvrir http://localhost:3000.
 
 ### Scripts disponibles
 
-| Commande        | Rôle                                                        |
-| --------------- | ----------------------------------------------------------- |
-| `npm run dev`   | Serveur de développement (rechargement automatique)         |
-| `npm run build` | Compilation pour la production (vérifie aussi le TypeScript) |
-| `npm start`     | Lance la version compilée                                   |
+| Commande            | Rôle                                                                 |
+| ------------------- | -------------------------------------------------------------------- |
+| `npm run dev`       | Serveur de développement (rechargement automatique)                  |
+| `npm run build`     | Compilation pour la production                                       |
+| `npm start`         | Lance la version compilée                                            |
+| `npm run typecheck` | Vérifie les types TypeScript de tout le projet                       |
+| `npm run test:unit` | Tests unitaires : parser et règles de détection                      |
+| `npm run test:rls`  | Prouve la sécurité de la base : 17 tests, deux utilisateurs isolés (sans Internet, ~2 s) |
 
-> ⚠️ `npm run lint` ne fonctionne pas encore : ESLint n'est pas installé et son support TypeScript ne gère pas encore TypeScript 7. En attendant, `npm run build` doit passer avant chaque Pull Request.
+**Avant chaque Pull Request**, ces 3 commandes doivent passer :
+
+```bash
+npm run typecheck
+npm run test:unit
+npm run build
+```
+
+> Pourquoi pas ESLint : son support de TypeScript (`typescript-eslint`) n'accepte que TypeScript ≤ 6.0, alors que le projet utilise TypeScript 7. `npm run typecheck` le remplace pour détecter les erreurs.
 
 ---
 
