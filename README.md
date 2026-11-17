@@ -13,9 +13,10 @@ Application web de **cybersécurité** qui importe des journaux de connexion, le
 3. [Règles de détection](#-règles-de-détection)
 4. [Stack technique](#-stack-technique)
 5. [Démarrage rapide](#-démarrage-rapide)
-6. [Architecture](#-architecture)
-7. [Répartition des tâches](#-répartition-des-tâches)
-8. [Travailler en équipe](#-travailler-en-équipe)
+6. [Dépannage](#-dépannage)
+7. [Architecture](#-architecture)
+8. [Répartition des tâches](#-répartition-des-tâches)
+9. [Travailler en équipe](#-travailler-en-équipe)
 
 ---
 
@@ -120,7 +121,7 @@ auth.users ─1:1─ profiles
 ### 1. Prérequis
 
 - [Git](https://git-scm.com/)
-- [Node.js](https://nodejs.org/) version 20.9 ou plus (`node -v` pour vérifier)
+- [Node.js](https://nodejs.org/) **version 24 ou plus** (`node -v` pour vérifier), nécessaire pour `npm run dev` (voir [Dépannage](#-dépannage))
 - Une invitation au projet Supabase de l'équipe (demander au membre 1)
 
 ### 2. Cloner et installer
@@ -151,13 +152,41 @@ Puis ouvrir http://localhost:3000.
 
 ### Scripts disponibles
 
-| Commande        | Rôle                                                        |
-| --------------- | ----------------------------------------------------------- |
-| `npm run dev`   | Serveur de développement (rechargement automatique)         |
-| `npm run build` | Compilation pour la production (vérifie aussi le TypeScript) |
-| `npm start`     | Lance la version compilée                                   |
+| Commande            | Rôle                                                                 |
+| ------------------- | -------------------------------------------------------------------- |
+| `npm run dev`       | Serveur de développement (rechargement automatique)                  |
+| `npm run build`     | Compilation pour la production                                       |
+| `npm start`         | Lance la version compilée                                            |
+| `npm run typecheck` | Vérifie les types TypeScript de tout le projet                       |
+| `npm run test:unit` | Tests unitaires : parser et règles de détection                      |
+| `npm run test:rls`  | Prouve la sécurité de la base : 17 tests, deux utilisateurs isolés (sans Internet, ~2 s) |
 
-> ⚠️ `npm run lint` ne fonctionne pas encore : ESLint n'est pas installé et son support TypeScript ne gère pas encore TypeScript 7. En attendant, `npm run build` doit passer avant chaque Pull Request.
+**Avant chaque Pull Request**, ces 3 commandes doivent passer :
+
+```bash
+npm run typecheck
+npm run test:unit
+npm run build
+```
+
+> Pourquoi pas ESLint : son support de TypeScript (`typescript-eslint`) n'accepte que TypeScript ≤ 6.0, alors que le projet utilise TypeScript 7. `npm run typecheck` le remplace pour détecter les erreurs.
+
+---
+
+## 🆘 Dépannage
+
+| Symptôme | Cause | Solution |
+| -------- | ----- | -------- |
+| « Service de connexion injoignable », ou `fetch failed` / `UND_ERR_CONNECT_TIMEOUT` dans le terminal après ~10 s | Le réseau coupe certaines connexions vers Supabase (fréquent sur les Wi-Fi d'école ou de résidence) | Changer de réseau (le partage de connexion du téléphone suffit), puis relancer `npm run dev`. Ce n'est pas un bug du code |
+| `UNABLE_TO_VERIFY_LEAF_SIGNATURE` ou erreur de certificat pendant `npm install` | Un antivirus ou le réseau inspecte le HTTPS | PowerShell : `$env:NODE_USE_SYSTEM_CA=1; npm install` — Git Bash / Mac : `NODE_USE_SYSTEM_CA=1 npm install`. `npm run dev` le fait déjà automatiquement |
+| `'cross-env' n'est pas reconnu` | Dépendances pas installées | `npm install` |
+| Erreur sur `NEXT_PUBLIC_SUPABASE_URL` au démarrage | `.env.local` absent, mal nommé (`.env.local.txt`, `.env`) ou pas à la racine | Le recréer à partir de `.env.example`, puis **relancer** `npm run dev` (il n'est lu qu'au démarrage) |
+| « Email ou mot de passe incorrect » avec le compte de test | Mauvaise adresse ou faute de frappe | Compte de test : `test.login@example.com` (et non `@gmail.com`). Le plus simple reste « Continuer avec GitHub » |
+| Inscription par email : aucun email reçu | Avec « Confirm email » activé, le service d'emails gratuit de Supabase n'envoie qu'aux **membres de l'équipe** du projet, et seulement quelques emails par heure | Utiliser GitHub, ou désactiver « Confirm email » (Supabase › Authentication › Sign In / Providers) : l'utilisateur est alors connecté directement |
+| Retour sur `/login?error=callback` après GitHub ou le lien de l'email | Le lien a été ouvert dans un autre navigateur ou une autre fenêtre que celle de départ | Recommencer depuis la même fenêtre. Le compte est quand même confirmé : on peut se connecter normalement |
+| Après un `git clone`, on voit encore `SPEC.md`, `app.js` ou `tests.js` | On est resté dans un ancien dossier du projet | Cloner dans un nouveau dossier : `git clone <url> LogSentinel`, puis ouvrir **ce** dossier dans VS Code |
+
+**Voir la vraie raison d'un échec de connexion ou d'inscription :** Supabase › **Logs & Analytics** › **Auth**, puis cliquer sur la ligne `/token` (connexion) ou `/signup` (inscription) la plus récente.
 
 ---
 
@@ -242,25 +271,27 @@ Le projet est découpé en **4 parties verticales** : chacun travaille sur ses p
 
 | Membre | Partie | Nom |
 | ------ | ------ | --- |
-| **M1** | Socle, authentification et sécurité | *à compléter* |
-| **M2** | Imports de journaux | *à compléter* |
-| **M3** | Moteur de détection | *à compléter* |
-| **M4** | Alertes et tableau de bord | *à compléter* |
+| **M1** | Socle, authentification et sécurité | Malek Akkari |
+| **M2** | Imports de journaux | mohameddahori |
+| **M3** | Moteur de détection | Alexis Zoa |
+| **M4** | Alertes et tableau de bord | foudjin |
 
 ### M1 — Socle, authentification et sécurité
 
 **Branche** : `feature/auth`
 
-- [ ] Créer le projet Supabase, inviter les 3 autres membres, activer la connexion GitHub et email
-- [ ] `supabase/migrations/0001_init.sql` : tables `profiles`, `log_imports`, `log_events`, `alerts`, suppressions en cascade, index
-- [ ] Trigger SQL qui crée `profiles` à l'inscription
-- [ ] Politiques RLS sur toutes les tables (`user_id = auth.uid()`), y compris « on n'ajoute qu'à un import qui nous appartient »
-- [ ] `types/database.ts` : types partagés (**à livrer en premier**, voir [Ordre de travail](#ordre-de-travail))
-- [ ] `lib/supabase/*`, `proxy.ts` : session et redirection vers `/login`, vérification avec `getClaims()`
-- [ ] Pages `/login` et `/signup`, `auth/callback`, Server Actions de connexion, inscription et déconnexion
-- [ ] `lib/safe-redirect.ts` : redirections limitées aux chemins internes
-- [ ] Mise en page `(app)/layout.tsx` + `Navbar`
-- [ ] `npm run test:rls` : deux utilisateurs simulés, aucun n'accède aux données de l'autre
+- [x] Créer le projet Supabase, inviter les 3 autres membres, activer la connexion GitHub et email
+- [x] `supabase/migrations/0001_init.sql` : tables `profiles`, `log_imports`, `log_events`, `alerts`, suppressions en cascade, index
+- [x] Trigger SQL qui crée `profiles` à l'inscription
+- [x] Politiques RLS sur toutes les tables (`user_id = auth.uid()`), y compris « on n'ajoute qu'à un import qui nous appartient »
+- [x] `types/database.ts` : types partagés (**à livrer en premier**, voir [Ordre de travail](#ordre-de-travail))
+- [x] `lib/supabase/*`, `proxy.ts` : session et redirection vers `/login`, vérification avec `getClaims()`
+- [x] Pages `/login` et `/signup`, `auth/callback`, Server Actions de connexion, inscription et déconnexion
+- [x] `lib/safe-redirect.ts` : redirections limitées aux chemins internes
+- [x] Mise en page `(app)/layout.tsx` + `Navbar`
+- [x] `npm run test:rls` : deux utilisateurs simulés, aucun n'accède aux données de l'autre
+- [x] Mise à jour de sécurité de Next.js (16.4.6) et `npm run typecheck`
+- [x] Messages d'erreur clairs en cas de panne réseau (« Service de connexion injoignable »)
 - [ ] Déploiement Vercel et variables d'environnement
 
 ### M2 — Imports de journaux
