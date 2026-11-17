@@ -50,7 +50,7 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
  
   const origin = await getOrigin()
   const supabase = await createClient()
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -66,6 +66,10 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
       return { error: NETWORK_ERROR }
     }
     return { error: "Impossible de créer le compte. Réessaie dans quelques minutes." }
+  }
+
+  if (data.session) {
+    redirect("/dashboard")
   }
 
   return { message: "Compte créé ! Vérifie tes emails pour confirmer ton adresse." }
