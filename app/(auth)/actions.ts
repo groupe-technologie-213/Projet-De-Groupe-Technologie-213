@@ -1,6 +1,7 @@
 "use server"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { isAuthRetryableFetchError } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/server"
 import { safeRedirect } from "@/lib/safe-redirect"
 
@@ -8,7 +9,7 @@ export type AuthState = {
   error?: string
   message?: string
 }
-
+const NETWORK_ERROR = "Service de connexion injoignable. Vérifie ta connexion Internet et réessaie."
 async function getOrigin() {
   return (await headers()).get("origin") ?? "http://localhost:3000"
 }
@@ -26,6 +27,9 @@ export async function signIn(_prevState: AuthState, formData: FormData): Promise
   if (error) {
     if (error.code === "email_not_confirmed") {
       return { error: "Confirme ton adresse email avant de te connecter." }
+    }
+    if (isAuthRetryableFetchError(error)) {
+      return { error: NETWORK_ERROR }
     }
     return { error: "Email ou mot de passe incorrect." }
   }
@@ -57,6 +61,9 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
   if (error) {
     if (error.code === "weak_password") {
       return { error: "Mot de passe trop faible : mélange lettres, chiffres et symboles." }
+    }
+    if (isAuthRetryableFetchError(error)) {
+      return { error: NETWORK_ERROR }
     }
     return { error: "Impossible de créer le compte. Réessaie dans quelques minutes." }
   }
