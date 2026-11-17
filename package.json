@@ -25,8 +25,7 @@
     "dev": "cross-env NODE_USE_SYSTEM_CA=1 next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "eslint --fix",
+    "typecheck": "tsc --noEmit",
     "test:unit": "vitest run tests/unit",
     "test:rls": "vitest run tests/rls"
   }
