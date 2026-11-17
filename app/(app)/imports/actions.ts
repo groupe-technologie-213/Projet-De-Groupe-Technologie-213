@@ -1,9 +1,8 @@
-// src/app/(app)/imports/actions.ts
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { parseLogFile } from "@/lib/analysis/parser";
+import { createClient } from "@/lib/supabase/server";
 
 const BATCH_SIZE = 500;
 
@@ -17,22 +16,26 @@ export async function uploadImportAction(formData: FormData) {
     return { error: "Non authentifié." };
   }
 
-  const file = formData.get("file") as File | null;
-  const customName = (formData.get("name") as string | null)?.trim();
+  const file = formData.get("file");
+  const name = formData.get("name");
+  const customName = typeof name === "string" ? name.trim() : "";
 
-  if (!file || file.size === 0) {
+  if (!(file instanceof File) || file.size === 0) {
     return { error: "Veuillez sélectionner un fichier CSV ou JSON valide." };
   }
 
-  const importName = customName || file.name;
-  const fileFormat = file.name.toLowerCase().endsWith(".json") ? "json" : "csv";
+  const fileName = file.name.toLowerCase();
+  if (!fileName.endsWith(".csv") && !fileName.endsWith(".json")) {
+    return { error: "Le fichier doit être au format CSV ou JSON." };
+  }
 
-  // 1. Création de l'import (statut 'pending' par défaut dans votre schéma)
+  const fileFormat = fileName.endsWith(".json") ? "json" : "csv";
+
   const { data: logImport, error: createError } = await supabase
     .from("log_imports")
     .insert({
       user_id: user.id,
-      name: importName,
+      name: customName || file.name,
       file_name: file.name,
       file_format: fileFormat,
       status: "pending",
@@ -43,39 +46,41 @@ export async function uploadImportAction(formData: FormData) {
     .single();
 
   if (createError || !logImport) {
-    return { error: createError?.message ?? "Impossible de créer l'import." };
+    return { error: createError?.message ?? "Impossible de créer l’import." };
   }
 
   try {
-    const content = await file.text();
-    const parsed = parseLogFile(content, file.name);
+    const parsed = parseLogFile(await file.text(), file.name);
 
-    // 2. Insertion par lots (batch insert) dans log_events
-    for (let i = 0; i < parsed.events.length; i += BATCH_SIZE) {
-      const batch = parsed.events.slice(i, i + BATCH_SIZE).map((ev) => ({
-        import_id: logImport.id,
-        user_id: user.id,
-        occurred_at: ev.occurred_at,
-        source_ip: ev.source_ip,
-        event_type: ev.event_type,
-        username: ev.username,
-        user_agent: ev.user_agent,
-      }));
-
-      const { error: batchError } = await supabase.from("log_events").insert(batch);
-      if (batchError) throw new Error(batchError.message);
+    if (parsed.events.length === 0) {
+      throw new Error("Le fichier ne contient aucun événement valide.");
     }
 
-    // 3. Mise à jour de l'import avec les vrais compteurs et le statut 'analyzed'
-    await supabase
+    for (let i = 0; i < parsed.events.length; i += BATCH_SIZE) {
+      const batch = parsed.events.slice(i, i + BATCH_SIZE).map((event) => ({
+        import_id: logImport.id,
+        user_id: user.id,
+        occurred_at: event.occurred_at,
+        source_ip: event.source_ip,
+        event_type: event.event_type,
+        username: event.username,
+        user_agent: event.user_agent,
+      }));
+
+      const { error } = await supabase.from("log_events").insert(batch);
+      if (error) throw new Error(error.message);
+    }
+
+    const { error: updateError } = await supabase
       .from("log_imports")
       .update({
-        status: "analyzed",
         total_lines: parsed.validCount + parsed.invalidCount,
         invalid_lines: parsed.invalidCount,
-        analyzed_at: new Date().toISOString(),
       })
-      .eq("id", logImport.id);
+      .eq("id", logImport.id)
+      .eq("user_id", user.id);
+
+    if (updateError) throw new Error(updateError.message);
 
     revalidatePath("/imports");
     revalidatePath("/dashboard");
@@ -85,12 +90,15 @@ export async function uploadImportAction(formData: FormData) {
       validCount: parsed.validCount,
       invalidCount: parsed.invalidCount,
     };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Erreur lors de l'analyse";
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Erreur lors de l’import.";
+
     await supabase
       .from("log_imports")
       .update({ status: "failed" })
-      .eq("id", logImport.id);
+      .eq("id", logImport.id)
+      .eq("user_id", user.id);
 
     revalidatePath("/imports");
     return { error: message };
