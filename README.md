@@ -13,9 +13,10 @@ Application web de **cybersécurité** qui importe des journaux de connexion, le
 3. [Règles de détection](#-règles-de-détection)
 4. [Stack technique](#-stack-technique)
 5. [Démarrage rapide](#-démarrage-rapide)
-6. [Architecture](#-architecture)
-7. [Répartition des tâches](#-répartition-des-tâches)
-8. [Travailler en équipe](#-travailler-en-équipe)
+6. [Dépannage](#-dépannage)
+7. [Architecture](#-architecture)
+8. [Répartition des tâches](#-répartition-des-tâches)
+9. [Travailler en équipe](#-travailler-en-équipe)
 
 ---
 
@@ -169,6 +170,23 @@ npm run build
 ```
 
 > Pourquoi pas ESLint : son support de TypeScript (`typescript-eslint`) n'accepte que TypeScript ≤ 6.0, alors que le projet utilise TypeScript 7. `npm run typecheck` le remplace pour détecter les erreurs.
+
+---
+
+## 🆘 Dépannage
+
+| Symptôme | Cause | Solution |
+| -------- | ----- | -------- |
+| « Service de connexion injoignable », ou `fetch failed` / `UND_ERR_CONNECT_TIMEOUT` dans le terminal après ~10 s | Le réseau coupe certaines connexions vers Supabase (fréquent sur les Wi-Fi d'école ou de résidence) | Changer de réseau (le partage de connexion du téléphone suffit), puis relancer `npm run dev`. Ce n'est pas un bug du code |
+| `UNABLE_TO_VERIFY_LEAF_SIGNATURE` ou erreur de certificat pendant `npm install` | Un antivirus ou le réseau inspecte le HTTPS | PowerShell : `$env:NODE_USE_SYSTEM_CA=1; npm install` — Git Bash / Mac : `NODE_USE_SYSTEM_CA=1 npm install`. `npm run dev` le fait déjà automatiquement |
+| `'cross-env' n'est pas reconnu` | Dépendances pas installées | `npm install` |
+| Erreur sur `NEXT_PUBLIC_SUPABASE_URL` au démarrage | `.env.local` absent, mal nommé (`.env.local.txt`, `.env`) ou pas à la racine | Le recréer à partir de `.env.example`, puis **relancer** `npm run dev` (il n'est lu qu'au démarrage) |
+| « Email ou mot de passe incorrect » avec le compte de test | Mauvaise adresse ou faute de frappe | Compte de test : `test.login@example.com` (et non `@gmail.com`). Le plus simple reste « Continuer avec GitHub » |
+| Inscription par email : aucun email reçu | Avec « Confirm email » activé, le service d'emails gratuit de Supabase n'envoie qu'aux **membres de l'équipe** du projet, et seulement quelques emails par heure | Utiliser GitHub, ou désactiver « Confirm email » (Supabase › Authentication › Sign In / Providers) : l'utilisateur est alors connecté directement |
+| Retour sur `/login?error=callback` après GitHub ou le lien de l'email | Le lien a été ouvert dans un autre navigateur ou une autre fenêtre que celle de départ | Recommencer depuis la même fenêtre. Le compte est quand même confirmé : on peut se connecter normalement |
+| Après un `git clone`, on voit encore `SPEC.md`, `app.js` ou `tests.js` | On est resté dans un ancien dossier du projet | Cloner dans un nouveau dossier : `git clone <url> LogSentinel`, puis ouvrir **ce** dossier dans VS Code |
+
+**Voir la vraie raison d'un échec de connexion ou d'inscription :** Supabase › **Logs & Analytics** › **Auth**, puis cliquer sur la ligne `/token` (connexion) ou `/signup` (inscription) la plus récente.
 
 ---
 
