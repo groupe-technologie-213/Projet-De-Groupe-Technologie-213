@@ -271,25 +271,27 @@ Le projet est découpé en **4 parties verticales** : chacun travaille sur ses p
 
 | Membre | Partie | Nom |
 | ------ | ------ | --- |
-| **M1** | Socle, authentification et sécurité | *à compléter* |
-| **M2** | Imports de journaux | *à compléter* |
-| **M3** | Moteur de détection | *à compléter* |
-| **M4** | Alertes et tableau de bord | *à compléter* |
+| **M1** | Socle, authentification et sécurité | Malek Akkari |
+| **M2** | Imports de journaux | mohameddahori |
+| **M3** | Moteur de détection | Alexis Zoa |
+| **M4** | Alertes et tableau de bord | foudjin |
 
 ### M1 — Socle, authentification et sécurité
 
 **Branche** : `feature/auth`
 
-- [ ] Créer le projet Supabase, inviter les 3 autres membres, activer la connexion GitHub et email
-- [ ] `supabase/migrations/0001_init.sql` : tables `profiles`, `log_imports`, `log_events`, `alerts`, suppressions en cascade, index
-- [ ] Trigger SQL qui crée `profiles` à l'inscription
-- [ ] Politiques RLS sur toutes les tables (`user_id = auth.uid()`), y compris « on n'ajoute qu'à un import qui nous appartient »
-- [ ] `types/database.ts` : types partagés (**à livrer en premier**, voir [Ordre de travail](#ordre-de-travail))
-- [ ] `lib/supabase/*`, `proxy.ts` : session et redirection vers `/login`, vérification avec `getClaims()`
-- [ ] Pages `/login` et `/signup`, `auth/callback`, Server Actions de connexion, inscription et déconnexion
-- [ ] `lib/safe-redirect.ts` : redirections limitées aux chemins internes
-- [ ] Mise en page `(app)/layout.tsx` + `Navbar`
-- [ ] `npm run test:rls` : deux utilisateurs simulés, aucun n'accède aux données de l'autre
+- [x] Créer le projet Supabase, inviter les 3 autres membres, activer la connexion GitHub et email
+- [x] `supabase/migrations/0001_init.sql` : tables `profiles`, `log_imports`, `log_events`, `alerts`, suppressions en cascade, index
+- [x] Trigger SQL qui crée `profiles` à l'inscription
+- [x] Politiques RLS sur toutes les tables (`user_id = auth.uid()`), y compris « on n'ajoute qu'à un import qui nous appartient »
+- [x] `types/database.ts` : types partagés (**à livrer en premier**, voir [Ordre de travail](#ordre-de-travail))
+- [x] `lib/supabase/*`, `proxy.ts` : session et redirection vers `/login`, vérification avec `getClaims()`
+- [x] Pages `/login` et `/signup`, `auth/callback`, Server Actions de connexion, inscription et déconnexion
+- [x] `lib/safe-redirect.ts` : redirections limitées aux chemins internes
+- [x] Mise en page `(app)/layout.tsx` + `Navbar`
+- [x] `npm run test:rls` : deux utilisateurs simulés, aucun n'accède aux données de l'autre
+- [x] Mise à jour de sécurité de Next.js (16.4.6) et `npm run typecheck`
+- [x] Messages d'erreur clairs en cas de panne réseau (« Service de connexion injoignable »)
 - [ ] Déploiement Vercel et variables d'environnement
 
 ### M2 — Imports de journaux
