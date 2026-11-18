@@ -1,8 +1,11 @@
-// components/imports/imports-table.tsx
 "use client";
 
 import { useState, useTransition } from "react";
-import { renameImportAction, deleteImportAction } from "../../app/(app)/imports/actions";
+import {
+  renameImportAction,
+  deleteImportAction,
+} from "../../app/(app)/imports/actions";
+import AnalyzeButton from "./AnalyzeButton";
 
 export interface LogImportItem {
   id: string;
@@ -24,6 +27,7 @@ export function ImportsTable({ imports }: ImportsTableProps) {
 
   function handleRename(id: string) {
     if (!newName.trim()) return;
+
     startTransition(async () => {
       const res = await renameImportAction(id, newName);
       if (!res.error) {
@@ -34,7 +38,10 @@ export function ImportsTable({ imports }: ImportsTableProps) {
   }
 
   function handleDelete(id: string) {
-    if (!confirm("Voulez-vous vraiment supprimer cet import et ses événements associés ?")) return;
+    if (!confirm("Voulez-vous vraiment supprimer cet import et ses événements associés ?")) {
+      return;
+    }
+
     startTransition(async () => {
       await deleteImportAction(id);
     });
@@ -71,11 +78,12 @@ export function ImportsTable({ imports }: ImportsTableProps) {
                       <input
                         type="text"
                         value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
+                        onChange={(event) => setNewName(event.target.value)}
                         className="border rounded px-2 py-1 text-sm"
                         autoFocus
                       />
                       <button
+                        type="button"
                         disabled={isPending}
                         onClick={() => handleRename(item.id)}
                         className="bg-black text-white px-3 py-1 rounded text-xs"
@@ -83,6 +91,7 @@ export function ImportsTable({ imports }: ImportsTableProps) {
                         Enregistrer
                       </button>
                       <button
+                        type="button"
                         onClick={() => setEditingId(null)}
                         className="border px-3 py-1 rounded text-xs"
                       >
@@ -102,8 +111,8 @@ export function ImportsTable({ imports }: ImportsTableProps) {
                       item.status === "analyzed"
                         ? "bg-emerald-100 text-emerald-800"
                         : item.status === "pending"
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-red-100 text-red-800"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-red-100 text-red-800"
                     }`}
                   >
                     {item.status}
@@ -111,10 +120,14 @@ export function ImportsTable({ imports }: ImportsTableProps) {
                 </td>
                 <td className="p-3">{item.event_count}</td>
                 <td className="p-3">{item.skipped_lines}</td>
-                <td className="p-3 text-right space-x-2">
+                <td className="p-3 text-right">
                   {editingId !== item.id && (
-                    <>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      {item.status === "pending" && (
+                        <AnalyzeButton importId={item.id} />
+                      )}
                       <button
+                        type="button"
                         onClick={() => {
                           setEditingId(item.id);
                           setNewName(item.name);
@@ -124,13 +137,14 @@ export function ImportsTable({ imports }: ImportsTableProps) {
                         Renommer
                       </button>
                       <button
+                        type="button"
                         disabled={isPending}
                         onClick={() => handleDelete(item.id)}
                         className="bg-red-600 text-white px-2 py-1 rounded text-xs"
                       >
                         Supprimer
                       </button>
-                    </>
+                    </div>
                   )}
                 </td>
               </tr>
