@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { StatCard } from "@/components/dashboard/StatCard"
 
 type Props = {
   searchParams: Promise<{
@@ -476,28 +477,5 @@ export default async function AlertsPage({ searchParams }: Props) {
   );
 }
 
-function StatCard({
-  title,
-  value,
-  icon,
-}: {
-  title: string;
-  value: number;
-  icon: string;
-}) {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-500">
-          {title}
-        </p>
-        <span className="text-2xl">{icon}</span>
-      </div>
 
-      <p className="mt-4 text-3xl font-bold text-gray-900">
-        {value.toLocaleString("fr-FR")}
-      </p>
-    </div>
-  );
-}
 
