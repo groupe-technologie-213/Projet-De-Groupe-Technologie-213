@@ -1,24 +1,36 @@
-import { updateAlertStatus } from "@/app/(app)/alerts/actions"
+"use client";
+
+import { useActionState } from "react";
+import { updateAlertStatus } from "@/app/(app)/alerts/actions";
+
+type ActionState = {
+  error: string | null;
+};
+
+const initialState: ActionState = {
+  error: null,
+};
 
 type StatusFormProps = {
-  alertId: string
-  currentStatus: string
-}
+  alertId: string;
+  currentStatus: string;
+};
 
 export default function StatusForm({
   alertId,
   currentStatus,
 }: StatusFormProps) {
+  const [state, formAction, isPending] = useActionState(
+    updateAlertStatus,
+    initialState
+  );
+
   return (
     <form
-      action={updateAlertStatus}
+      action={formAction}
       className="flex flex-col gap-2 sm:flex-row"
     >
-      <input
-        type="hidden"
-        name="alert_id"
-        value={alertId}
-      />
+      <input type="hidden" name="alert_id" value={alertId} />
 
       <select
         name="status"
@@ -34,10 +46,17 @@ export default function StatusForm({
 
       <button
         type="submit"
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+        disabled={isPending}
+        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Modifier le statut
+        {isPending ? "Modification..." : "Modifier le statut"}
       </button>
+
+      {state.error && (
+        <p className="text-sm text-red-600 sm:basis-full">
+          {state.error}
+        </p>
+      )}
     </form>
-  )
+  );
 }
