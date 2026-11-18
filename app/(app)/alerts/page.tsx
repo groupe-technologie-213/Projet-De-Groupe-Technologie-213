@@ -9,8 +9,9 @@ type Props = {
     status?: string;
     rule?: string;
     search?: string;
+    compte?: string;
     period?: string;
-    ip?: string
+    ip?: string;
   }>;
 };
 
@@ -22,7 +23,8 @@ export default async function AlertsPage({ searchParams }: Props) {
   const status = params.status ?? "";
   const rule = params.rule ?? "";
   const search = params.search?.trim() ?? "";
-  const ip = params.ip?.trim() ?? ""
+  const compte = params.compte?.trim() ?? "";
+  const ip = params.ip?.trim() ?? "";
   const period = params.period ?? "";
 
   // Vérifier la session
@@ -110,12 +112,18 @@ export default async function AlertsPage({ searchParams }: Props) {
   }
 
   // Recherche par titre
-  if (search) {
-    query = query.ilike("title", `%${search}%`);
-  }
-  // Recherche par IP
-  if (ip) {
-  query = query.contains("source_ips", [ip])
+ if (search) {
+  query = query.ilike("title", `%${search}%`);
+}
+
+// Recherche par nom de compte
+if (compte) {
+  query = query.contains("usernames", [compte]);
+}
+
+// Recherche par IP
+if (ip) {
+  query = query.contains("source_ips", [ip]);
 }
 
   const { data: alerts, error } = await query;
@@ -159,7 +167,7 @@ export default async function AlertsPage({ searchParams }: Props) {
     });
 
   return (
-    <main className="space-y-8">
+    <div className="space-y-8">
 
       {/* En-tête */}
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -221,38 +229,66 @@ export default async function AlertsPage({ searchParams }: Props) {
         <form
           action="/alerts"
           method="GET"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
 
         >
           {/* Recherche */}
-          <div>
-            <label
-              htmlFor="search"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              Recherche
-            </label>
-            <input
-              id="search"
-              type="text"
-              name="search"
-              defaultValue={search}
-              placeholder="Rechercher une alerte..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-            <label
-              htmlFor="search"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >Recherche par IP</label>
-            <input
-              type="text"
-              name="ip"
-             defaultValue={ip}
-             placeholder="Ex. : 192.168.1.10"
-             aria-label="Rechercher par adresse IP"
-             className="rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
-/>
-          </div>
+         {/* Recherche par titre */}
+<div>
+  <label
+    htmlFor="search"
+    className="mb-2 block text-sm font-medium text-gray-700"
+  >
+    Recherche
+  </label>
+
+  <input
+    id="search"
+    type="text"
+    name="search"
+    defaultValue={search}
+    placeholder="Rechercher une alerte..."
+    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+  />
+</div>
+
+{/* Recherche par compte */}
+<div>
+  <label
+    htmlFor="compte"
+    className="mb-2 block text-sm font-medium text-gray-700"
+  >
+    Compte
+  </label>
+
+  <input
+    id="compte"
+    type="text"
+    name="compte"
+    defaultValue={compte}
+    placeholder="Nom du compte..."
+    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+  />
+</div>
+
+{/* Recherche par IP */}
+<div>
+  <label
+    htmlFor="ip"
+    className="mb-2 block text-sm font-medium text-gray-700"
+  >
+    Recherche par IP
+  </label>
+
+  <input
+    id="ip"
+    type="text"
+    name="ip"
+    defaultValue={ip}
+    placeholder="Ex. : 192.168.1.10"
+    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+  />
+</div>
 
           {/* Gravité */}
           <div>
@@ -375,7 +411,7 @@ export default async function AlertsPage({ searchParams }: Props) {
             </p>
           </div>
 
-          {(severity || status || rule || search || period) && (
+          {(severity || status || rule || search || compte || ip || period) && (
             <span className="w-fit rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
               Filtres actifs
             </span>
@@ -467,7 +503,7 @@ export default async function AlertsPage({ searchParams }: Props) {
           </div>
         )}
       </section>
-    </main>
+   </div>
   );
 }
 
