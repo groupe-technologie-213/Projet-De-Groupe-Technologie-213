@@ -6,6 +6,7 @@ import StatusForm from "@/components/alerts/StatusForm";
 import DeleteAlertButton from "./deleteAlertButton";
 import { updateAlertNotes } from "../actions";
 import NotesForm from "@/components/alerts/NotesForm";
+import { updateAlertIpInfo } from "../actions";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -61,10 +62,14 @@ export default async function AlertDetailPage({ params }: Props) {
     .select("*")
     .eq("id", id)
     .single();
-
-  if (error || !alert) {
-    notFound();
+const ipInfo = (alert.ip_info ?? {}) as Record<
+  string,
+  {
+    country?: string | null;
+    city?: string | null;
+    isp?: string | null;
   }
+>;
 
   // Chronologie construite à partir des dates déjà disponibles.
  const securityEvents = [
@@ -227,29 +232,88 @@ const alertEvents = [
         )}
       </section>
 
+    
       {/* Adresses IP */}
-      <section className="rounded-xl border bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-bold text-gray-900">
-          Adresses IP impliquées
-        </h2>
+<section className="rounded-xl border bg-white p-6 shadow-sm">
+  <h2 className="mb-4 text-lg font-bold text-gray-900">
+    Adresses IP impliquées
+  </h2>
 
-        {alert.source_ips?.length > 0 ? (
-          <div className="space-y-2">
-            {alert.source_ips.map((ip: string) => (
-              <div
-                key={ip}
-                className="rounded-lg bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700"
-              >
+  {alert.source_ips?.length > 0 ? (
+    <div className="space-y-4">
+      {alert.source_ips.map((ip: string) => {
+        const location = ipInfo[ip];
+
+        return (
+          <div
+            key={ip}
+            className="rounded-lg border border-gray-200 bg-gray-50 p-4"
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-sm font-semibold text-gray-900">
                 {ip}
+              </span>
+            </div>
+
+            {location ? (
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs font-medium text-gray-500">
+                    Pays
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">
+                    {location.country || "Inconnu"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-gray-500">
+                    Ville
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">
+                    {location.city || "Inconnue"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-gray-500">
+                    Fournisseur Internet
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">
+                    {location.isp || "Inconnu"}
+                  </p>
+                </div>
               </div>
-            ))}
+            ) : (
+              <p className="mt-3 text-sm text-gray-500">
+                Informations de localisation non disponibles.
+              </p>
+            )}
           </div>
-        ) : (
-          <p className="text-sm text-gray-500">
-            Aucune adresse IP renseignée.
-          </p>
-        )}
-      </section>
+        );
+      })}
+
+      <form action={updateAlertIpInfo} className="pt-2">
+        <input
+          type="hidden"
+          name="alert_id"
+          value={alert.id}
+        />
+
+        <button
+          type="submit"
+          className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+          >
+          Actualiser les localisations IP
+        </button>
+      </form>
+    </div>
+  ) : (
+    <p className="text-sm text-gray-500">
+      Aucune adresse IP renseignée.
+    </p>
+  )}
+</section>
 
       {/* Informations complémentaires */}
       <section className="rounded-xl border bg-white p-6 shadow-sm">
