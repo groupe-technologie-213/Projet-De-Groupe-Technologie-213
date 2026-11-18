@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { StatCard } from "@/components/dashboard/StatCard"
+import { StatCard } from "@/components/dashboard/StatCard";
+import SeverityBadge from "@/components/alerts/SeverityBadge";
 
 type Props = {
   searchParams: Promise<{
@@ -436,14 +437,7 @@ export default async function AlertsPage({ searchParams }: Props) {
                     </td>
 
                     <td className="px-5 py-4">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          severityColors[alert.severity] ??
-                          "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {severityLabels[alert.severity] ?? alert.severity}
-                      </span>
+                      <SeverityBadge severity={alert.severity} />
                     </td>
 
                     <td className="px-5 py-4 text-gray-600">

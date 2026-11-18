@@ -1,41 +1,27 @@
-import { updateAlertStatus } from "../actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import SeverityBadge from "@/components/alerts/SeverityBadge";
+import StatusForm from "@/components/alerts/StatusForm";
 import DeleteAlertButton from "./deleteAlertButton";
+import { updateAlertNotes } from "../actions";
+import NotesForm from "@/components/alerts/NotesForm";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
-
-const severityStyles: Record<string, string> = {
-  low: "bg-blue-100 text-blue-700",
-  medium: "bg-yellow-100 text-yellow-700",
-  high: "bg-orange-100 text-orange-700",
-  critical: "bg-red-100 text-red-700",
-};
-
 const statusStyles: Record<string, string> = {
   open: "bg-red-100 text-red-700",
   investigating: "bg-yellow-100 text-yellow-700",
   resolved: "bg-green-100 text-green-700",
   false_positive: "bg-gray-100 text-gray-700",
 };
-
 const statusLabels: Record<string, string> = {
   open: "Ouverte",
   investigating: "En investigation",
   resolved: "Résolue",
   false_positive: "Faux positif",
 };
-
-const severityLabels: Record<string, string> = {
-  low: "Faible",
-  medium: "Moyenne",
-  high: "Élevée",
-  critical: "Critique",
-};
-
 const ruleLabels: Record<string, string> = {
   brute_force: "Force brute",
   password_spraying: "Password spraying",
@@ -157,35 +143,11 @@ const alertEvents = [
             {statusLabels[alert.status] || alert.status}
           </span>
 
-          <form
-            action={updateAlertStatus}
-            className="flex flex-col gap-2 sm:flex-row"
-          >
-            <input
-              type="hidden"
-              name="alert_id"
-              value={alert.id}
-            />
-
-            <select
-              name="status"
-              defaultValue={alert.status}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-              aria-label="Nouveau statut de l'alerte"
-            >
-              <option value="open">Ouverte</option>
-              <option value="investigating">En investigation</option>
-              <option value="resolved">Résolue</option>
-              <option value="false_positive">Faux positif</option>
-            </select>
-
-            <button
-              type="submit"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-            >
-              Modifier le statut
-            </button>
-          </form>
+          
+          <StatusForm
+  alertId={alert.id}
+  currentStatus={alert.status}
+/>
         </div>
       </div>
 
@@ -202,21 +164,19 @@ const alertEvents = [
             </p>
           </div>
 
+         
           <div className="flex flex-col gap-2">
-            <span
-              className={`rounded-full px-4 py-2 text-center text-sm font-semibold ${
-                severityStyles[alert.severity] ||
-                "bg-gray-100 text-gray-700"
-              }`}
-            >
-              Gravité : {severityLabels[alert.severity] || alert.severity}
+            <span className="text-xs font-medium text-gray-500">
+              Gravité
             </span>
+
+            <SeverityBadge severity={alert.severity} />
 
             <span className="rounded-full bg-gray-100 px-4 py-2 text-center text-sm text-gray-700">
               {ruleLabels[alert.rule] || alert.rule}
             </span>
           </div>
-        </div>
+        </div> 
       </section>
 
       {/* Statistiques */}
@@ -320,12 +280,16 @@ const alertEvents = [
           </div>
         </div>
 
-        <div className="mt-6 border-t pt-4">
-          <p className="text-sm text-gray-500">Notes</p>
-          <p className="mt-2 whitespace-pre-wrap text-gray-700">
-            {alert.notes || "Aucune note disponible."}
-          </p>
-        </div>
+<div className="mt-6 border-t pt-4">
+  <h3 className="mb-3 text-sm font-semibold text-gray-900">
+    Notes de l'analyste
+  </h3>
+
+  <NotesForm
+    alertId={alert.id}
+    initialNotes={alert.notes}
+  />
+</div>
       </section>
 
       {/* Chronologie visuelle */}

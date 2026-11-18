@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
+
 export async function createAlert(formData: FormData) {
   const supabase = await createClient()
 
@@ -207,4 +208,61 @@ export async function deleteAlert(formData: FormData) {
   revalidatePath("/dashboard");
 
   redirect("/alerts");
+}
+
+
+type ActionState = {
+  error: string | null;
+};
+
+export async function updateAlertNotes(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      error: "Vous devez être connecté pour modifier une note.",
+    };
+  }
+
+  const alertId = String(formData.get("alert_id") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  if (!alertId) {
+    return { error: "Identifiant de l'alerte manquant." };
+  }
+
+  const { data, error } = await supabase
+    .from("alerts")
+    .update({
+      notes: notes || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", alertId)
+    .eq("user_id", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    console.error("Erreur enregistrement note :", error);
+    return { error: "Impossible d'enregistrer la note." };
+  }
+
+  if (!data) {
+    return {
+      error: "Alerte introuvable ou accès non autorisé.",
+    };
+  }
+
+  revalidatePath(`/alerts/${alertId}`);
+  revalidatePath("/alerts");
+
+  redirect(`/alerts/${alertId}`);
 }
