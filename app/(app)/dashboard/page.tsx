@@ -130,7 +130,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="space-y-8">
+    <div className="space-y-8">
 
       {/* En-tête */}
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -345,7 +345,7 @@ export default async function DashboardPage() {
         </Link>
       </section>
 
-    </main>
+    </div>
   )
 }
 

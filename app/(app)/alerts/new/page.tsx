@@ -29,7 +29,7 @@ export default async function NewAlertPage({ searchParams }: Props) {
     .order("created_at", { ascending: false })
 
   return (
-    <main className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-4xl space-y-8">
 
       {/* En-tête */}
       <div>
@@ -309,7 +309,7 @@ export default async function NewAlertPage({ searchParams }: Props) {
         </div>
 
       </form>
-    </main>
+    </div>
   )
 }
 
