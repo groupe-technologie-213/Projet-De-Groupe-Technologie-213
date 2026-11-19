@@ -2,7 +2,12 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { createAlert } from "../actions"
 
-export default async function NewAlertPage() {
+type Props = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+export default async function NewAlertPage({ searchParams }: Props) {
+  const params = await searchParams;
   const supabase = await createClient()
 
   const {
@@ -24,7 +29,7 @@ export default async function NewAlertPage() {
     .order("created_at", { ascending: false })
 
   return (
-    <main className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-4xl space-y-8">
 
       {/* En-tête */}
       <div>
@@ -50,6 +55,11 @@ export default async function NewAlertPage() {
           {error.message}
         </div>
       )}
+      {params.error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+         {params.error}
+       </div>
+   )}
 
       {/* Formulaire */}
       <form action={createAlert} className="space-y-6">
@@ -299,7 +309,7 @@ export default async function NewAlertPage() {
         </div>
 
       </form>
-    </main>
+    </div>
   )
 }
 
