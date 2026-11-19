@@ -84,19 +84,21 @@ export function parseAndValidateRow(
 }
 
 export function parseCSV(content: string): ParseResult {
+  
   const lines = content.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
   if (lines.length === 0) {
     return { events: [], validCount: 0, invalidCount: 0, errors: [] };
   }
 
   const delimiter = lines[0].includes(";") && !lines[0].includes(",") ? ";" : ",";
-  const headers = lines[0].split(delimiter).map((h) => h.replace(/^["']|["']$/g, "").trim());
+const headers = splitCsvLine(lines[0], delimiter);
 
   const events: NormalizedLogEvent[] = [];
   const errors: Array<{ line: number; reason: string }> = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(delimiter).map((v) => v.replace(/^["']|["']$/g, "").trim());
+    const values = splitCsvLine(lines[i], delimiter);
+
     if (values.length < headers.length) {
       errors.push({ line: i + 1, reason: "Nombre de colonnes insuffisant" });
       continue;
@@ -114,7 +116,32 @@ export function parseCSV(content: string): ParseResult {
 
   return { events, validCount: events.length, invalidCount: errors.length, errors };
 }
+export function splitCsvLine(line: string, delimiter: string): string[] {
+  const values: string[] = [];
+  let current = "";
+  let inQuotes = false;
 
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      values.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  values.push(current.trim());
+  return values;
+}
 export function parseJSON(content: string): ParseResult {
   let parsed: unknown;
   try {
