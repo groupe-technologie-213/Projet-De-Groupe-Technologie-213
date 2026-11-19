@@ -1,3 +1,6 @@
+import { isIP } from "node:net";
+
+
 
 export type LogEventType =
   | "login_success"
@@ -28,13 +31,10 @@ const VALID_EVENT_TYPES: Set<string> = new Set([
   "logout",
 ]);
 
-const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
-const IPV6_REGEX = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::1$|^::$/;
-
 export function isValidIp(ip: string): boolean {
-  const trimmed = ip.trim();
-  return IPV4_REGEX.test(trimmed) || IPV6_REGEX.test(trimmed);
+  return isIP(ip.trim()) !== 0;
 }
+
 
 export function parseAndValidateRow(
   raw: Record<string, unknown>,
