@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { MAX_IMPORT_FILE_SIZE } from "@/lib/analysis/limits";
 import { parseLogFile } from "@/lib/analysis/parser";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,6 +23,10 @@ export async function uploadImportAction(formData: FormData) {
 
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Veuillez sélectionner un fichier CSV ou JSON valide." };
+  }
+
+ if (file.size > MAX_IMPORT_FILE_SIZE) {
+    return { error: "Fichier trop volumineux : 900 Ko maximum." };
   }
 
   const fileName = file.name.toLowerCase();
