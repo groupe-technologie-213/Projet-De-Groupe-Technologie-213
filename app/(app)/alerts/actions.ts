@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import { lookupIp, type IpIntel } from "@/lib/ip-intel"
 
 
 
@@ -314,69 +315,23 @@ export async function updateAlertIpInfo(formData: FormData) {
     throw new Error("Cette alerte ne contient aucune adresse IP.");
   }
 
-const ipInfo: Record<
-  string,
-  {
-    country: string | null;
-    city: string | null;
-    isp: string | null;
-  }
-> = {};
+const ipInfo: Record<string, IpIntel | null> = {};
 
 if (alert.ip_info && typeof alert.ip_info === "object") {
   Object.assign(ipInfo, alert.ip_info);
 }
 
   // Interroger le service de géolocalisation pour chaque IP
+ // Interroger le service de géolocalisation pour chaque IP (fonction commune lib/ip-intel.ts)
   for (const ip of sourceIps) {
     // Ne pas refaire une recherche si l'IP est déjà renseignée
-    if (ipInfo[ip]?.country || ipInfo[ip]?.city || ipInfo[ip]?.isp) {
-      continue;
-    }
+    if (ipInfo[ip]) continue;
 
-    try {
-       const response = await fetch(
-       `https://ipwho.is/${encodeURIComponent(ip)}`,
-       { cache: "no-store" }
-       );
-
-      if (!response.ok) {
-  const errorText = await response.text();
-
-  console.error("Erreur de géolocalisation :", {
-    ip,
-    status: response.status,
-    message: errorText,
-  });
-
-  continue;
-}
-
-const result = await response.json();
-
-console.log("Réponse ipwho.is :", result);
-
-if (!response.ok || result.success === false) {
-  console.error("Erreur de géolocalisation :", result);
-  continue;
-}
-
-ipInfo[ip] = {
-  country: result.country ?? null,
-  city: result.city ?? null,
-  isp: result.connection?.isp ?? result.connection?.org ?? null,
-};
-
-console.log("Informations récupérées :", ipInfo[ip]);
-
-console.log("Informations récupérées :", ipInfo[ip]);
-    } catch (error) {
-      console.error(`Erreur de géolocalisation pour ${ip} :`, error);
-    }
+    ipInfo[ip] = await lookupIp(ip);
   }
 
   // Enregistrer les résultats dans Supabase
-  console.log("Objet ip_info final :", ipInfo);
+
   const { error: updateError } = await supabase
     .from("alerts")
     .update({
