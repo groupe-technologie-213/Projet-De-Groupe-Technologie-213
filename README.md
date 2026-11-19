@@ -2,7 +2,9 @@
 
 Application web de **cybersécurité** qui importe des journaux de connexion, les analyse automatiquement pour repérer des **comportements suspects** (force brute, connexions inhabituelles…) et génère des **alertes qui expliquent clairement** pourquoi chaque comportement mérite d'être vérifié.
 
-> 🚧 **État actuel** : seule l'architecture est en place. La plupart des fichiers sont **vides**. Chaque membre de l'équipe a sa partie : voir [Répartition des tâches](#-répartition-des-tâches).
+🌐 **Site en ligne : https://logsentinel-two.vercel.app**
+
+> **État actuel** : connexion (email et GitHub), import des journaux, analyse par les 5 règles, alertes et tableau de bord sont en place et déployés. L'avancement de chacun est détaillé dans [Répartition des tâches](#-répartition-des-tâches).
 
 ---
 
@@ -292,7 +294,7 @@ Le projet est découpé en **4 parties verticales** : chacun travaille sur ses p
 - [x] `npm run test:rls` : deux utilisateurs simulés, aucun n'accède aux données de l'autre
 - [x] Mise à jour de sécurité de Next.js (16.4.6) et `npm run typecheck`
 - [x] Messages d'erreur clairs en cas de panne réseau (« Service de connexion injoignable »)
-- [ ] Déploiement Vercel et variables d'environnement
+- [x] Déploiement Vercel et variables d'environnement (https://logsentinel-two.vercel.app)
 
 ### M2 — Imports de journaux
 
