@@ -129,7 +129,7 @@ auth.users ─1:1─ profiles
 ### 2. Cloner et installer
 
 ```bash
-git clone https://github.com/Alexis-Zoa/Projet-De-Groupe-Technologie-213.git
+git clone https://github.com/groupe-technologie-213/Projet-De-Groupe-Technologie-213.git
 cd Projet-De-Groupe-Technologie-213
 npm install
 ```
