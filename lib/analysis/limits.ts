@@ -1,0 +1,1 @@
+export const MAX_IMPORT_FILE_SIZE = 900 * 1024; // 900 Ko
