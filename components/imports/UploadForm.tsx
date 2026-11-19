@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { uploadImportAction } from "../../app/(app)/imports/actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { MAX_IMPORT_FILE_SIZE } from "@/lib/analysis/limits";
 
 export function UploadForm() {
   const [isPending, startTransition] = useTransition();
@@ -18,6 +19,13 @@ export function UploadForm() {
     const form = e.currentTarget;
     const formData = new FormData(form);
     setStatusMessage(null);
+
+    // Vérifié avant l'envoi : au-delà de 1 Mo, Next.js refuserait la requête avec une erreur peu claire
+    const file = formData.get("file");
+    if (file instanceof File && file.size > MAX_IMPORT_FILE_SIZE) {
+      setStatusMessage({ type: "error", text: "Fichier trop volumineux : 900 Ko maximum." });
+      return;
+    }
 
     startTransition(async () => {
       const res = await uploadImportAction(formData);
